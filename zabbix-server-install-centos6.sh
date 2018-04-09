@@ -241,6 +241,9 @@ yum install zabbix-agent -y
 chkconfig --list | grep "zabbix-agent"
 chkconfig zabbix-agent on
 chkconfig --list | grep "zabbix-agent"
+service zabbix-agent start
+service zabbix-agent status
+cat /var/log/zabbix/zabbix_agentd.log
 
 #for trouble run again
 #do an update on selinux policy
