@@ -1,6 +1,9 @@
 #update system
 yum update -y
 
+base=2.4
+minor=5
+
 #install mysql server
 yum install mariadb-server -y
 
@@ -27,12 +30,16 @@ echo $?
 mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'flush privileges;'
 echo $?
 
+mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;'
+echo $?
+
 #enable mysql at startup
 systemctl enable mariadb
 echo $?
 
 #install zabbix repo
-rpm -ivh http://repo.zabbix.com/zabbix/3.4/rhel/7/x86_64/zabbix-release-3.4-2.el7.noarch.rpm
+rpm -ivh http://repo.zabbix.com/zabbix/$base/rhel/7/x86_64/zabbix-release-$base-1.el7.noarch.rpm
+rpm -ivh http://repo.zabbix.com/zabbix/$base/rhel/7/x86_64/zabbix-release-$base-2.el7.noarch.rpm
 echo $?
 
 #reroad repo content
