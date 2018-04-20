@@ -17,7 +17,6 @@ yum update -y
 #install SELinux debuging utils
 yum install policycoreutils-python -y
 
-
 #install mariadb (mysql database engine for CentOS 7)
 yum install mariadb-server -y
 

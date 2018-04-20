@@ -47,6 +47,7 @@ yum update -y
 echo $?
 
 #install zabbix proxy
+#yum install zabbix-proxy-2.4.5 -y
 yum install zabbix-proxy-mysql -y
 echo $?
 #this package creates user zabbix
