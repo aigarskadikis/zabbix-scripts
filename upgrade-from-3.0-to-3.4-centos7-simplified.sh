@@ -27,18 +27,18 @@ rm -rf /var/cache/yum
 #temporary disable selinux
 setenforce 0
 
-#move old log to dir
+#move old log to home dir
 cp /var/log/zabbix/zabbix_server.log ~
 #empty existing log
 > /var/log/zabbix/zabbix_server.log
 
-#install new 3.4 repo
+#install zabbix 3.4 repo
 rpm -ivh http://repo.zabbix.com/zabbix/3.4/rhel/7/x86_64/zabbix-release-3.4-2.el7.noarch.rpm
 
 #update components
 yum update -y
 
-#start zabbix server
+#start zabbix server and start instant check how the upgrade process goes
 systemctl start zabbix-server & tail -f /var/log/zabbix/zabbix_server.log
 
 #start agent and front end
@@ -53,14 +53,14 @@ checkmodule -M -m -o zabbix_server_add.mod zabbix_server_add.te
 semodule_package -m zabbix_server_add.mod -o zabbix_server_add.pp
 semodule -i zabbix_server_add.pp
 
-#clear browser cache. Press Ctrl+Shift+Del
+#open web browser, clear browser cache (press Ctrl+Shift+Del), go to zabbix address, do few clicks around
 
-#list how many type of selinux denies we have
+#list how many types of selinux denies we have
 echo
 grep denied /var/log/audit/audit.log | sed "s/^.*denied /denied/g;s/ pid=[0-9]\+ \| ino=[0-9]\+//g;s/ name=.*scontext=\| path=.*scontext=/ /g" | sort | uniq
 echo
 
-#ease up installing
+#ease up greping
 grep denied /var/log/audit/audit.log | sed "s/^.*denied /denied/g;s/ pid=[0-9]\+ \| ino=[0-9]\+//g;s/ name=.*scontext=\| path=.*scontext=/ /g" | sort | uniq | sed "s/^.*comm=.//g;s/. .*system_r:/.*/g;s/:.*//g" | sort|uniq | sed "s/^/grep \"comm.*/g;s/$/\" \/var\/log\/audit\/audit.log/g"
 echo
 
@@ -75,4 +75,3 @@ setenforce 1 && tail -f /var/log/audit/audit.log | grep denied
 
 #check if everything is fine
 cat /var/log/zabbix/zabbix_server.log
-
