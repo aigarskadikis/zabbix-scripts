@@ -47,6 +47,9 @@ systemctl start {zabbix-agent,httpd}
 #check how everything is running smoothly 
 systemctl status {zabbix-server,zabbix-server,httpd}
 
+#install SELinux debuging utils
+yum install policycoreutils-python -y
+
 #istall some selinux rulles for preprocessing to works
 curl -s https://support.zabbix.com/secure/attachment/53320/zabbix_server_add.te > zabbix_server_add.te
 checkmodule -M -m -o zabbix_server_add.mod zabbix_server_add.te
