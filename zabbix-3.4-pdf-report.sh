@@ -34,11 +34,10 @@ vim config.inc.php
 #fix message
 #Unable to logout: Array ( [code] => -32602 [message] => Invalid params. [data] => Invalid parameter "/": unexpected parameter "user". ) 
 
-#look just below logout($user) function
 cd /usr/share/zabbix/include/classes/api/services
-#show some output of active configuration
+#show some output of active configuration. look just below logout($user) function
 grep -n -A5 "public function logout" CUser.php
-#backup configuration to 'root' user home dir
+#backup configuration to users 'root' home
 cp CUser.php ~
 #calculate line to make as comment
 ln=$(grep -n -A5 "public function logout" CUser.php | grep ZBX_API_ERROR_PARAMETERS | egrep -o "^[0-9]+")
@@ -46,7 +45,7 @@ ln=$(grep -n -A5 "public function logout" CUser.php | grep ZBX_API_ERROR_PARAMET
 echo "$ln"
 #comment line
 sed -i "$ln {s/^/#/}" CUser.php
-#show what has been commented
+#show what just happened
 grep -n -A5 "public function logout" CUser.php
 
 #to remove the fix
