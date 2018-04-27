@@ -46,6 +46,7 @@ ln=$(grep -n -A5 "public function logout" CUser.php | grep ZBX_API_ERROR_PARAMET
 echo "$ln"
 #uncomment line
 sed -i "$ln {s/^/#/}" CUser.php
+#show what has been commented
 grep -n -A5 "public function logout" CUser.php
 
 #to fix back
@@ -58,4 +59,4 @@ grep -n -A5 "public function logout" CUser.php
 #http://localhost:8030/zabbix/report
 
 #related
-
+#https://catonrug.blogspot.com/2018/04/install-zabbix-dynamic-pdf-report-34.html
