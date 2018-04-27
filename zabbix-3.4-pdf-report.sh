@@ -38,18 +38,19 @@ vim config.inc.php
 cd /usr/share/zabbix/include/classes/api/services
 #show some output of active configuration
 grep -n -A5 "public function logout" CUser.php
-#backup configuration
+#backup configuration to 'root' user home dir
 cp CUser.php ~
-#calculate line to comment out
+#calculate line to make as comment
 ln=$(grep -n -A5 "public function logout" CUser.php | grep ZBX_API_ERROR_PARAMETERS | egrep -o "^[0-9]+")
 #echo line number
 echo "$ln"
-#uncomment line
+#comment line
 sed -i "$ln {s/^/#/}" CUser.php
 #show what has been commented
 grep -n -A5 "public function logout" CUser.php
 
-#to fix back
+#to remove the fix
+#ln=$(grep -n -A5 "public function logout" CUser.php | grep ZBX_API_ERROR_PARAMETERS | egrep -o "^[0-9]+")
 #sed -i "$ln {s/^[#]\+//}" CUser.php
 
 #based on port forwarding in VirtualBox
@@ -59,4 +60,4 @@ grep -n -A5 "public function logout" CUser.php
 #http://localhost:8030/zabbix/report
 
 #related
-#https://catonrug.blogspot.com/2018/04/install-zabbix-dynamic-pdf-report-34.html
+#https://catonrug.blogspot.com/2018/04/install-zabbix-dynamic-pdf-report-centos.html
