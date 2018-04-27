@@ -6,16 +6,16 @@ getenforce
 #turn of SELinux
 setenforce 0
 
-#install git and vim
-yum install git vim -y
+#install vim
+yum install vim -y
 
-#install version 0.9.4
+#download version 0.9.4
 curl -L "https://drive.google.com/uc?export=download&id=0B_VNwWso1iSQcGJqamQ1dFVSWWM" -o ~/zabbix-pdf-report-0.9.4.tgz
 
 #look where is zabbix front end directory
 find / -name trigger_prototypes.php
 
-#download code
+#extract 'report' dir
 tar -xvzf ~/zabbix-pdf-report-0.9.4.tgz -C /usr/share/zabbix
 
 #move to the frontend dir
