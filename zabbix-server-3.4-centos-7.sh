@@ -47,6 +47,9 @@ mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privilege
 #refresh permissions
 mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'flush privileges;'
 
+#show existing databases
+mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | grep zabbix
+
 #enable to start MySQL automatically at next boot
 systemctl enable mariadb
 
@@ -63,6 +66,7 @@ echo zabbix-server-mysql package not found
 else
 
 #create zabbix database structure
+ls -l /usr/share/doc/zabbix-server-mysql*/
 zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -pTaL2gPU5U9FcCU2u zabbix
 if [ $? -ne 0 ]; then
 echo cannot insert zabbix sql shema into database
