@@ -95,6 +95,8 @@ server=/etc/zabbix/zabbix_server.conf
 grep "DBPassword=" $server
 #change the password
 sed -i "s/^.*DBPassword=.*$/DBPassword=TaL2gPU5U9FcCU2u/g" $server
+
+echo "CacheUpdateFrequency=4" >> $server
 grep -v "^$\|^#" $server
 
 #start
