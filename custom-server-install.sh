@@ -111,8 +111,10 @@ systemctl enable zabbix-server
 #install web server
 yum install httpd -y
 
+yum install dejavu-sans-fonts php php-bcmath php-gd php-ldap php-mbstring php-xml php-mysql -y
+
 #install front end
-rpm -iv zabbix-web-3.*
+rpm -iv zabbix-web-3.4.5
 #error: Failed dependencies:
 #        dejavu-sans-fonts is needed by zabbix-web
 #        php >= 5.4 is needed by zabbix-web
@@ -123,7 +125,6 @@ rpm -iv zabbix-web-3.*
 #        php-xml is needed by zabbix-web
 #        zabbix-web-database = 3.4.8-0.0.1r78441.el7 is needed by zabbix-web
 
-yum install dejavu-sans-fonts php php-bcmath php-gd php-ldap php-mbstring php-xml php-mysql -y
 
 rpm -iv zabbix-web-mysql-* zabbix-web-3.*
 

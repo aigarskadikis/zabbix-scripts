@@ -24,24 +24,11 @@ CREATE DATABASE zabbix CHARACTER SET UTF8 collate utf8_bin;
 GRANT ALL PRIVILEGES on zabbix.* to "zabbix"@"%" IDENTIFIED BY "zabbix";
 
 mysql -h localhost -uroot -pzabbix -P 3306 -s <<< 'CREATE DATABASE zabbix CHARACTER SET UTF8 collate utf8_bin;'
-mysql -h localhost -uroot -pzabbix -P 3306 -s <<< 'GRANT ALL PRIVILEGES on zabbix.* to "zabbix"@"%" IDENTIFIED BY "zabbix";'
-
-mysql -h localhost -uroot -pzabbix -P 3306 -s <<< 'GRANT ALL PRIVILEGES on zabbix.* to "frontend"@"%" IDENTIFIED BY "zabbix";'
+mysql -h localhost -uroot -pzabbix -P 3306 -s <<< 'GRANT ALL PRIVILEGES on zabbix.* to "zabbix"@"localhost" IDENTIFIED BY "zabbix";'
 
 mysql -h localhost -uroot -pzabbix -P 3306 -s <<< 'FLUSH PRIVILEGES;'
 
 mysql -h localhost -uroot -pzabbix -P 3306 -s <<< 'SHOW GRANTS;'
-
-
-GRANT ALL PRIVILEGES on zabbix.* to 'frontend'@'%' IDENTIFIED BY 'zabbix';
-FLUSH PRIVILEGES;
-SHOW GRANTS;
-
-GRANT ALL PRIVILEGES ON *.* TO 'frontend'@'10.0.%.%' IDENTIFIED BY 'zabbix';
-
-GRANT ALL PRIVILEGES on zabbix.* to 'zabbix'@'%';
-
-GRANT ALL ON *.* to frontend@'%' IDENTIFIED BY 'zabbix'; 
 
 mysql -h localhost -uroot -pzabbix -P 3306 -s <<< 'show databases;'
 show databases;
@@ -68,6 +55,8 @@ cd ~/zabbix-3.4.5
 
 time make install
 
+sed -i "s/^.*DBPassword=.*$/DBPassword=zabbix/g" /usr/local/etc/zabbix_server.conf
+grep -v "^$\|^#" /usr/local/etc/zabbix_server.conf
 /usr/local/sbin/zabbix_server -c /usr/local/etc/zabbix_server.conf
 ps -aux | grep zabbix_server
 
@@ -121,6 +110,12 @@ zypper install apache2-mod_php7
 #php: error while loading shared libraries: libargon2.so.1: cannot open shared object file: No such file or directory
 
 zypper se -i php7
+
+groupadd zabbixs
+useradd -g zabbixs zabbixs
+
+/usr/local/sbin/zabbix_server -c /usr/local/etc/zabbix_server.conf
+
 
 
 
