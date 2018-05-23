@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #this is tested and works together with fresh CentOS-7-x86_64-Minimal-1708.iso
+#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-3.4-mysql.sh > install.sh && chmod +x install.sh && ./install.sh 3.4.6
 
 #open 80 and 443 into firewall
 systemctl enable firewalld
@@ -157,10 +158,34 @@ fi
 
 sed -i "s/^/#/g" /etc/httpd/conf.d/welcome.conf
 
+cat > /etc/zabbix/web/zabbix.conf.php << EOF
+<?php
+// Zabbix GUI configuration file.
+global \$DB;
+
+\$DB['TYPE']     = 'MYSQL';
+\$DB['SERVER']   = 'localhost';
+\$DB['PORT']     = '0';
+\$DB['DATABASE'] = 'zabbix';
+\$DB['USER']     = 'zabbix';
+\$DB['PASSWORD'] = 'TaL2gPU5U9FcCU2u';
+
+// Schema name. Used for IBM DB2 and PostgreSQL.
+\$DB['SCHEMA'] = '';
+
+\$ZBX_SERVER      = 'localhost';
+\$ZBX_SERVER_PORT = '10051';
+\$ZBX_SERVER_NAME = '$1';
+
+\$IMAGE_FORMAT_DEFAULT = IMAGE_FORMAT_PNG;
+EOF
+
 systemctl restart httpd
 systemctl enable httpd
 
 yum install zabbix-agent-$1 -y
+yum install zabbix-sender-$1 -y
+yum install zabbix-get-$1 -y
 systemctl start zabbix-agent
 systemctl enable zabbix-agent
 fi #httpd document root not configured
