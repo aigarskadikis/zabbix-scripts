@@ -196,16 +196,6 @@ fi #zabbix database already exist
 fi #cannot set root password for mariadb
 fi #mariadb is not running
 
-cd
-cat > ~/.ssh/authorized_keys << EOF
----- BEGIN SSH2 PUBLIC KEY ----
-Comment: "rsa-key-20180523"
-AAAAB3NzaC1yc2EAAAABJQAAAQEA3/UubA7SVx3Lh9aIEHoghxdc7zu64GZEM8O8
-VLv9OufEV8v0CXZ77pTcnhUUWHA9HTUH+sCTZ4d/ca15n+yMq9FEcK30OX/pBQ4L
-zhlpvsIx/oy+3EjJJuAC0Sc4UbhueD/7u0hjWIJgcKVYTsp0b++wDTIcQ69AsON9
-XRE6bu781XkgH0c1dohCIJ1ZVx8loDZyBm7gFKma0zoxhPAI7hGeXwtmADaNthDf
-9hJJ9zlQaCViuqFQvX+SpsaRyX1dN7RIf6wRY4X7OOrah3G3rvZXpqJ1qiM5da/M
-AyqtCJ9g4AOH5dNc5g1KOitwBqdpfBhvD99xoBEaQtM+j867yw==
----- END SSH2 PUBLIC KEY ----
-EOF
-chmod -R 700 ~/.ssh/
+mkdir -p ~/.ssh
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAqkmrGeulxpX2NWr5cMUndl+wemjatXp5CSkxUna1Es0vqmkEn+ujA39RSqFB7Vvfl2R+ddOUW9JSC6VXc6CYMyVhYd/0KGg8YkD6ZTKK5zKhj34UQ/mhGptcnwXjpDyjQ6vAV2gb5YAceNHvRYx1M171LhbSlogxqBQGcD31XgG3fVXcw7spjAILBh4QUBQt6vD28Bq/W8jA91mvgov/ZW0dDA0sJDR5BvsUEQRJYAt7yy93uhV3bkI1jO6463ra5eMZHPPmmKwYhon5spCvomqWgh9lB/zpy33R9VuJsGJ9fJ/AL3RKROEMa+wtuGcs5NmStjS+kMbaIzAFIvn5Ow== rsa-key-20180524"> ~/.ssh/authorized_keys
+chmod -R 700 ~/.ssh
