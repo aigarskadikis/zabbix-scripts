@@ -9,6 +9,7 @@ systemctl start firewalld
 
 firewall-cmd --permanent --add-service=http
 firewall-cmd --permanent --add-service=https
+firewall-cmd --permanent --add-service=mysql
 firewall-cmd --add-port=162/udp --permanent
 firewall-cmd --add-port=3000/tcp --permanent #for grafana reporting server https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-grafana-to-plot-beautiful-graphs-from-zabbix-on-centos-7
 firewall-cmd --reload
@@ -44,6 +45,18 @@ mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'create database zab
 
 #create user zabbix and allow user to connect to the database with only from localhost
 mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
+
+#GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'; FLUSH PRIVILEGES;
+#GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.2.2'; FLUSH PRIVILEGES; SHOW GRANTS;
+#SHOW GRANTS FOR 'zabbix'@'10.0.2.2';
+#GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.2.5'; FLUSH PRIVILEGES; SHOW GRANTS;
+#grant all privileges on zabbix.* to 'zabbix'@'%';
+
+#Allow everyone to connect
+#mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
+
+#grant all privileges on *.* to 'zabbix'@'10.0.2.2' identified by "TaL2gPU5U9FcCU2u"; FLUSH PRIVILEGES; SHOW GRANTS;
+
 
 #refresh permissions
 mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'flush privileges;'
@@ -196,3 +209,5 @@ fi #zabbix database already exist
 fi #cannot set root password for mariadb
 fi #mariadb is not running
 
+#mysql -h localhost -uroot -p'5sRj4GXspvDKsBXW'
+#mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
