@@ -10,8 +10,6 @@ zypper install gcc make
 
 zypper install mysql mysql-client
 
-
-
 rcmysql start
 
 mysql_secure_installation
