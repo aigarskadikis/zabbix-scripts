@@ -12,6 +12,8 @@ firewall-cmd --permanent --add-service=https
 firewall-cmd --permanent --add-service=mysql
 firewall-cmd --add-port=162/udp --permanent
 firewall-cmd --add-port=3000/tcp --permanent #for grafana reporting server https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-grafana-to-plot-beautiful-graphs-from-zabbix-on-centos-7
+firewall-cmd --add-port=10050/tcp --permanent
+firewall-cmd --add-port=10051/tcp --permanent
 firewall-cmd --reload
 
 #update system
