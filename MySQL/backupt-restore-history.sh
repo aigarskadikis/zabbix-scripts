@@ -19,8 +19,10 @@
 # * restore zabbix database which contains no historical date. do not start zabbix-server
 # * create table structure for all 5 tables
 # * manually create partitions in the past period
-# * create automatic partitioning in the future
-# * 
+# * create automatic partitioning in the future. do I need to recrate if already created?
+# * restore all historical data, bzcat dbdump.bz2 | sudo mysql -uzabbix -p zabbix
+# * tune MariaDB config
+ 
 
 #backup all
 time=$(date +%Y%m%d%H%M)
