@@ -22,21 +22,13 @@
 # * create automatic partitioning in the future. do I need to recrate if already created?
 # * restore all historical data, bzcat dbdump.bz2 | sudo mysql -uzabbix -p zabbix
 # * tune MariaDB config
- 
 
-#backup all
-time=$(date +%Y%m%d%H%M)
-sudo mysqldump -uroot -p5sRj4GXspvDKsBXW --flush-logs --single-transaction --create-options zabbix | bzip2 -9 > /root/all.$time.bz2
-# https://dev.mysql.com/doc/refman/5.5/en/mysqldump.html
-# --flush-logs          Flush MySQL server log files before starting dump	
-# --single-transaction  Issue a BEGIN SQL statement before dumping data from server	
-# --create-options      Include all MySQL-specific table options in CREATE TABLE statements	   
-cd /root
-echo uploading file..
-./uploader.py uploader.cfg /root/all.$time.bz2
-
+systemctl stop {zabbix-server,zabbix-agent}
+systemctl status {zabbix-server,zabbix-agent}
+systemctl disable {zabbix-server,zabbix-agent}
 
 #backup zabbix all tables execpt the 5 biggest tables
+yum install bzip2 -y
 time=$(date +%Y%m%d%H%M)
 sudo mysqldump -uroot -p5sRj4GXspvDKsBXW --flush-logs --single-transaction --create-options --ignore-table=zabbix.history_log --ignore-table=zabbix.history_str --ignore-table=zabbix.history_text --ignore-table=zabbix.history_uint --ignore-table=zabbix.history zabbix | bzip2 -9 > /root/$time.bz2
 cd /root
@@ -63,12 +55,7 @@ ls -lah /root/history*
 ./uploader.py uploader.cfg /root/history_uint.$time.bz2
 ./uploader.py uploader.cfg /root/history.$time.bz2
 
-#stop zabbix server
-systemctl stop {zabbix-server,zabbix-agent}
-systemctl status {zabbix-server,zabbix-agent}
-systemctl disable {zabbix-server,zabbix-agent}
 
-yum remove mysql-server
 
 yum remove mariadb mariadb-server
 rm -rf /var/lib/mysql
@@ -76,7 +63,23 @@ mv /etc/my.cnf ~
 
 
 #create MariaDB repo
+#https://downloads.mariadb.org/mariadb/repositories/#mirror=nluug&distro=CentOS&distro_release=centos7-amd64--centos7&version=10.3
 
+cat > /etc/yum.repos.d/MariaDB.repo << EOF
+# MariaDB 10.3 CentOS repository list - created 2018-05-31 08:48 UTC
+# http://downloads.mariadb.org/mariadb/repositories/
+[mariadb]
+name = MariaDB
+baseurl = http://yum.mariadb.org/10.3/centos7-amd64
+gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+gpgcheck=1
+
+EOF
+
+yum clean all
+rm -rf /var/cache/yum
+
+yum -y install MariaDB-server MariaDB-client
 
 CREATE TABLE `history_str` (
   `itemid` bigint(20) unsigned NOT NULL,
@@ -158,4 +161,6 @@ PARTITION p2018_04_28 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-29 00:00:00")) E
 PARTITION p2018_04_29 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-30 00:00:00")) ENGINE=InnoDB
 );
 
+systemctl enable {zabbix-server,zabbix-agent}
+systemctl start {zabbix-server,zabbix-agent}
 
