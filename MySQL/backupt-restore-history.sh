@@ -1,31 +1,44 @@
 
 # agenda:
 # migrate CentOS 7 default (latest) MySQL 5.5 to MariaDB 12.3
-#
-# features:
 # create daily partitioning from 2018-01-01 to this day for tables: history_log, history_str, history_text, history_uint, history
 # enable automaticall partitioning in future for these 5 tables by using native MariaDB procedures listed
-# https://zabbix.org/wiki/Docs/howto/mysql_partitioning
-# https://zabbix.org/wiki/Docs/howto/mysql_partition <== this is the wrong one
+#
+# why?:
+# http://www.vertabelo.com/blog/technical-articles/everything-you-need-to-know-about-mysql-partitions
+#
 
-# workflow:
+# steps to produce:
 # * stop zabbix-server, zabbix-agent. disable services at startup
-# * backup everything except tables: history, history_uint, history_text, history_str, history_log
-# * backup all 5 biggest tables separately 
-# * remove MySQL 5.5, yum remove mariadb mariadb-server, rm -rf /etc/my.cnf, rm -rf /var/lib/mysql
-# * clean yum cache, yum clean all, rm -rf /var/cache/yum
+# * backup everything except tables: history, history_uint, history_text, history_str, history_log, trends, trends_uint. https://catonrug.blogspot.com/2018/04/backup-zabbix-database-without-history-mysql.html
+# * list/save show create table for all 7 biggest tables
+# * backup all 7 biggest tables separately
+# * remove MySQL 5.5, yum remove mariadb mariadb-server && rm -rf /etc/my.cnf && rm -rf /var/lib/mysql
+# * clean yum cache, yum clean all && rm -rf /var/cache/yum
 # * install MariaDB repo, https://downloads.mariadb.org/mariadb/repositories/#mirror=nluug&distro=CentOS&distro_release=centos7-amd64--centos7&version=10.3
 # * install MariaDB server, yum install MariaDB-server MariaDB-client
 # * restore zabbix database which contains no historical date. do not start zabbix-server
 # * create table structure for all 5 tables
-# * manually create partitions in the past period
-# * create automatic partitioning in the future. do I need to recrate if already created?
+# * manually create partitions in the past period, https://catonrug.blogspot.com/2018/05/manually-create-partitions-past-period-mysql-zabbix.html
+# * create automatic partitioning in the future, https://zabbix.org/wiki/Docs/howto/mysql_partitioning
 # * restore all historical data, bzcat dbdump.bz2 | sudo mysql -uzabbix -p zabbix
 # * tune MariaDB config
+# =======lets start========
 
+# * stop zabbix-server, zabbix-agent. disable services at startup
 systemctl stop {zabbix-server,zabbix-agent}
 systemctl status {zabbix-server,zabbix-agent}
 systemctl disable {zabbix-server,zabbix-agent}
+
+# * backup everything except tables: history, history_uint, history_text, history_str, history_log
+
+mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") #authorize in mysql
+show create table zabbix.history\G
+show create table zabbix.history_uint\G
+show create table zabbix.history_str\G
+show create table zabbix.history_text\G
+show create table zabbix.history_log\G
+
 
 #backup zabbix all tables execpt the 5 biggest tables
 yum install bzip2 -y
@@ -226,8 +239,34 @@ PARTITION p2018_06_04 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-05 00:00:00")) E
 PARTITION p2018_06_05 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-06 00:00:00")) ENGINE=InnoDB
 );
 
-show create table history;
+exit
+# to modify partition table
+# ALTER ONLINE TABLE table REORGANIZE PARTITION;
+# https://dev.mysql.com/doc/refman/5.5/en/alter-table-partition-operations.html
+
+
+mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
+
+show create table zabbix.history\G
+show create table zabbix.history_uint\G
+show create table zabbix.history_str\G
+show create table zabbix.history_text\G
+show create table zabbix.history_log\G
+exit
+
+cd
+bzcat history_log.$time.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat history_str.$time.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat history_text.$time.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat history_uint.$time.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat history.$time.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+
+SHOW PROCEDURE STATUS;
+SHOW EVENTS;
+
+SHOW PROCEDURE STATUS; SHOW EVENTS;
 
 systemctl enable {zabbix-server,zabbix-agent}
 systemctl start {zabbix-server,zabbix-agent}
+systemctl status {zabbix-server,zabbix-agent}
 
