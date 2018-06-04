@@ -30,6 +30,11 @@ systemctl stop {zabbix-server,zabbix-agent}
 systemctl status {zabbix-server,zabbix-agent}
 systemctl disable {zabbix-server,zabbix-agent}
 
+# backup all
+time=$(date +%Y%m%d%H%M)
+mysqldump -hlocalhost -uroot -p5sRj4GXspvDKsBXW --flush-logs --single-transaction --create-options zabbix | gzip > /root/$time.all.sql.gz
+
+
 # * list/save show create table for all 7 biggest tables
 mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") #authorize in mysql
 show create table zabbix.history\G
@@ -98,7 +103,7 @@ CREATE TABLE `trends_uint` (
   `value_max` bigint(20) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`itemid`,`clock`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
+exit
 # hit ctrl + c to exit the client
 
 # install prerequisite for compression
@@ -123,10 +128,14 @@ sudo mysqldump -uroot -p5sRj4GXspvDKsBXW --flush-logs --single-transaction --no-
 #list all backup files - there shoud be 8 files and every file should be bigger than 0
 ls -lah /root/$time*
 
-yum remove mariadb mariadb-server
-rm -rf /var/lib/mysql
+# system stop
+systemctl stop mariadb
+systemctl status mariadb
+
+yum -y remove mariadb mariadb-server
 # or if the space lets to do cold backup
 mv /var/lib/mysql ~
+#rm -rf /var/lib/mysql
 mv /etc/my.cnf ~
 
 #create MariaDB repo
@@ -152,27 +161,34 @@ systemctl start mariadb
 systemctl status mariadb
 systemctl enable mariadb
 
-#mysql_secure_installation
+#set root password
 /usr/bin/mysqladmin -u root password '5sRj4GXspvDKsBXW'
 
+#test if authorization works
 mysql -uroot -p'5sRj4GXspvDKsBXW'
 
-#create zabbix database
+#create database 'zabbix', create user 'zabbix' with password 'TaL2gPU5U9FcCU2u'. assign user to database
 mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'create database zabbix character set utf8 collate utf8_bin;'
-
-#create user 'zabbix' and allow user to connect to the database only from localhost
 mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
-
 mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | grep zabbix
 
-
-bzcat /root/$time.bz2 | sudo mysql -uzabbix -p zabbix
-
-#create empty tables
+# create empty tables: history, history_uint, history_text, history_str, history_log, trends, trends_uint
 mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
-
 use zabbix;
-
+CREATE TABLE `history` (
+  `itemid` bigint(20) unsigned NOT NULL,
+  `clock` int(11) NOT NULL DEFAULT '0',
+  `value` double(16,4) NOT NULL DEFAULT '0.0000',
+  `ns` int(11) NOT NULL DEFAULT '0',
+  KEY `history_1` (`itemid`,`clock`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+CREATE TABLE `history_uint` (
+  `itemid` bigint(20) unsigned NOT NULL,
+  `clock` int(11) NOT NULL DEFAULT '0',
+  `value` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `ns` int(11) NOT NULL DEFAULT '0',
+  KEY `history_uint_1` (`itemid`,`clock`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 CREATE TABLE `history_str` (
   `itemid` bigint(20) unsigned NOT NULL,
   `clock` int(11) NOT NULL DEFAULT '0',
@@ -180,7 +196,13 @@ CREATE TABLE `history_str` (
   `ns` int(11) NOT NULL DEFAULT '0',
   KEY `history_str_1` (`itemid`,`clock`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
+CREATE TABLE `history_text` (
+  `itemid` bigint(20) unsigned NOT NULL,
+  `clock` int(11) NOT NULL DEFAULT '0',
+  `value` text COLLATE utf8_bin NOT NULL,
+  `ns` int(11) NOT NULL DEFAULT '0',
+  KEY `history_text_1` (`itemid`,`clock`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 CREATE TABLE `history_log` (
   `itemid` bigint(20) unsigned NOT NULL,
   `clock` int(11) NOT NULL DEFAULT '0',
@@ -192,128 +214,124 @@ CREATE TABLE `history_log` (
   `ns` int(11) NOT NULL DEFAULT '0',
   KEY `history_log_1` (`itemid`,`clock`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
-CREATE TABLE `history_uint` (
+CREATE TABLE `trends` (
   `itemid` bigint(20) unsigned NOT NULL,
   `clock` int(11) NOT NULL DEFAULT '0',
-  `value` bigint(20) unsigned NOT NULL DEFAULT '0',
-  `ns` int(11) NOT NULL DEFAULT '0',
-  KEY `history_uint_1` (`itemid`,`clock`)
+  `num` int(11) NOT NULL DEFAULT '0',
+  `value_min` double(16,4) NOT NULL DEFAULT '0.0000',
+  `value_avg` double(16,4) NOT NULL DEFAULT '0.0000',
+  `value_max` double(16,4) NOT NULL DEFAULT '0.0000',
+  PRIMARY KEY (`itemid`,`clock`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
-CREATE TABLE `history` (
+CREATE TABLE `trends_uint` (
   `itemid` bigint(20) unsigned NOT NULL,
   `clock` int(11) NOT NULL DEFAULT '0',
-  `value` double(16,4) NOT NULL DEFAULT '0.0000',
-  `ns` int(11) NOT NULL DEFAULT '0',
-  KEY `history_1` (`itemid`,`clock`)
+  `num` int(11) NOT NULL DEFAULT '0',
+  `value_min` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `value_avg` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `value_max` bigint(20) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`itemid`,`clock`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
-CREATE TABLE `history_text` (
-  `itemid` bigint(20) unsigned NOT NULL,
-  `clock` int(11) NOT NULL DEFAULT '0',
-  `value` text COLLATE utf8_bin NOT NULL,
-  `ns` int(11) NOT NULL DEFAULT '0',
-  KEY `history_text_1` (`itemid`,`clock`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
-#now we can start zabbix-server
-
+# modify tables to enable partitioning
 
 ALTER TABLE `history` PARTITION BY RANGE(clock)
 (
-PARTITION p2018___OLD VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-01 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_01 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-02 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_02 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-03 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_03 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-04 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_04 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-05 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_05 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-06 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_06 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-07 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_07 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-08 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_08 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-09 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_09 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-10 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_10 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-11 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_11 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-12 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_12 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-13 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_13 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-14 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_14 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-15 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_15 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-16 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_16 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-17 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_17 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-18 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_18 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-19 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_19 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-20 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_20 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-21 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_21 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-22 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_22 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-23 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_23 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-24 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_24 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-25 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_25 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-26 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_26 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-27 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_27 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-28 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_28 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-29 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_29 VALUES LESS THAN (UNIX_TIMESTAMP("2018-04-30 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_04_30 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-01 00:00:00")) ENGINE=InnoDB,
-
-PARTITION p2018_05_01 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-02 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_02 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-03 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_03 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-04 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_04 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-05 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_05 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-06 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_06 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-07 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_07 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-08 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_08 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-09 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_09 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-10 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_10 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-11 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_11 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-12 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_12 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-13 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_13 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-14 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_14 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-15 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_15 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-16 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_16 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-17 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_17 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-18 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_18 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-19 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_19 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-20 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_20 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-21 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_21 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-22 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_22 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-23 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_23 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-24 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_24 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-25 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_25 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-26 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_26 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-27 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_27 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-28 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_28 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-29 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_29 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-30 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_30 VALUES LESS THAN (UNIX_TIMESTAMP("2018-05-31 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_05_31 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-01 00:00:00")) ENGINE=InnoDB,
-
+PARTITION p2018___OLD VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-01 00:00:00")) ENGINE=InnoDB,
 PARTITION p2018_06_01 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-02 00:00:00")) ENGINE=InnoDB,
 PARTITION p2018_06_02 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-03 00:00:00")) ENGINE=InnoDB,
 PARTITION p2018_06_03 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-04 00:00:00")) ENGINE=InnoDB,
 PARTITION p2018_06_04 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-05 00:00:00")) ENGINE=InnoDB,
-PARTITION p2018_06_05 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-06 00:00:00")) ENGINE=InnoDB
+PARTITION p2018_06_05 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-06 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_06 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-07 00:00:00")) ENGINE=InnoDB
+);
+ALTER TABLE `history_uint` PARTITION BY RANGE(clock)
+(
+PARTITION p2018___OLD VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-01 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_01 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-02 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_02 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-03 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_03 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-04 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_04 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-05 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_05 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-06 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_06 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-07 00:00:00")) ENGINE=InnoDB
+);
+ALTER TABLE `history_str` PARTITION BY RANGE(clock)
+(
+PARTITION p2018___OLD VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-01 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_01 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-02 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_02 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-03 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_03 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-04 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_04 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-05 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_05 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-06 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_06 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-07 00:00:00")) ENGINE=InnoDB
+);
+ALTER TABLE `history_text` PARTITION BY RANGE(clock)
+(
+PARTITION p2018___OLD VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-01 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_01 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-02 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_02 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-03 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_03 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-04 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_04 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-05 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_05 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-06 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_06 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-07 00:00:00")) ENGINE=InnoDB
+);
+ALTER TABLE `history_log` PARTITION BY RANGE(clock)
+(
+PARTITION p2018___OLD VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-01 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_01 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-02 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_02 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-03 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_03 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-04 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_04 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-05 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_05 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-06 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_06 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-07 00:00:00")) ENGINE=InnoDB
+);
+ALTER TABLE `trends` PARTITION BY RANGE(clock)
+(
+PARTITION p2018___OLD VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-01 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_01 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-02 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_02 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-03 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_03 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-04 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_04 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-05 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_05 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-06 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_06 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-07 00:00:00")) ENGINE=InnoDB
+);
+ALTER TABLE `trends_uint` PARTITION BY RANGE(clock)
+(
+PARTITION p2018___OLD VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-01 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_01 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-02 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_02 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-03 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_03 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-04 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_04 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-05 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_05 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-06 00:00:00")) ENGINE=InnoDB,
+PARTITION p2018_06_06 VALUES LESS THAN (UNIX_TIMESTAMP("2018-06-07 00:00:00")) ENGINE=InnoDB
 );
 
-exit
 # to modify partition table
 # ALTER ONLINE TABLE table REORGANIZE PARTITION;
 # https://dev.mysql.com/doc/refman/5.5/en/alter-table-partition-operations.html
 
-
-mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
-
+#cheeck again if every table has partitioning
 show create table zabbix.history\G
 show create table zabbix.history_uint\G
 show create table zabbix.history_str\G
 show create table zabbix.history_text\G
 show create table zabbix.history_log\G
+show create table zabbix.trends\G
+show create table zabbix.trends_uint\G
+
+#logout
 exit
 
+# put back data
 cd
-bzcat history_log.$time.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
-bzcat history_str.$time.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
-bzcat history_text.$time.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
-bzcat history_uint.$time.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
-bzcat history.$time.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat $time.without.history.trends.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat $time.history_log.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat $time.history_str.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat $time.history_text.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat $time.history_uint.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat $time.history.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat $time.trends.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
+bzcat $time.trends_uint.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
 
 SHOW PROCEDURE STATUS;
 SHOW EVENTS;
@@ -323,4 +341,11 @@ SHOW PROCEDURE STATUS; SHOW EVENTS;
 systemctl enable {zabbix-server,zabbix-agent}
 systemctl start {zabbix-server,zabbix-agent}
 systemctl status {zabbix-server,zabbix-agent}
+
+# if frontend has thifferent user
+grep "DATABASE\|USER\|PASSWORD"  /etc/zabbix/web/zabbix.conf.php
+
+mysql -uroot -p5sRj4GXspvDKsBXW
+GRANT SELECT, UPDATE, DELETE, INSERT ON zabbix.* TO 'zabbix_web'@'localhost' identified by 'c$2Q!V4S%R';
+
 
