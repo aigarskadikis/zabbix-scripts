@@ -1,0 +1,30 @@
+      <NATNetworks>
+        <NATNetwork networkName="lab" network="10.0.2.0/24" ipv6="0" ipv6prefix="fd17:625c:f037:2::/64" advertiseDefaultIPv6Route="0" needDhcp="1" enabled="1">
+          <PortForwarding4>
+            <Forwarding name="2209" proto="1" hostip="127.0.0.1" hostport="2209" guestip="10.0.2.9" guestport="22"/>
+            <Forwarding name="3.0.15 http" proto="1" hostip="127.0.0.1" hostport="8030" guestip="10.0.2.15" guestport="80"/>
+            <Forwarding name="3.0.15 ssh" proto="1" hostip="127.0.0.1" hostport="2230" guestip="10.0.2.15" guestport="22"/>
+            <Forwarding name="3.2.11 http" proto="1" hostip="127.0.0.1" hostport="8032" guestip="10.0.2.4" guestport="80"/>
+            <Forwarding name="3.2.11 ssh" proto="1" hostip="127.0.0.1" hostport="2232" guestip="10.0.2.4" guestport="22"/>
+            <Forwarding name="3.2.3 http" proto="1" hostip="127.0.0.1" hostport="8323" guestip="10.0.2.6" guestport="80"/>
+            <Forwarding name="3.2.3 ssh" proto="1" hostip="127.0.0.1" hostport="2323" guestip="10.0.2.6" guestport="22"/>
+            <Forwarding name="3.4 myql" proto="1" hostip="127.0.0.1" hostport="13306" guestip="10.0.2.5" guestport="3306"/>
+            <Forwarding name="3.4.7 http" proto="1" hostip="127.0.0.1" hostport="8034" guestip="10.0.2.5" guestport="80"/>
+            <Forwarding name="3.4.7 snmpsim" proto="0" hostip="127.0.0.1" hostport="1024" guestip="10.0.2.5" guestport="1024"/>
+            <Forwarding name="3.4.7 ssh" proto="1" hostip="127.0.0.1" hostport="2234" guestip="10.0.2.5" guestport="22"/>
+            <Forwarding name="cenot4" proto="1" hostip="127.0.0.1" hostport="2204" guestip="10.0.2.21" guestport="22"/>
+            <Forwarding name="centos69 22" proto="1" hostip="127.0.0.1" hostport="2269" guestip="10.0.2.8" guestport="22"/>
+            <Forwarding name="centos69 80" proto="1" hostip="127.0.0.1" hostport="8069" guestip="10.0.2.8" guestport="80"/>
+            <Forwarding name="clear centos7" proto="1" hostip="127.0.0.1" hostport="4321" guestip="10.0.2.7" guestport="22"/>
+            <Forwarding name="clear centos7 http" proto="1" hostip="127.0.0.1" hostport="4322" guestip="10.0.2.7" guestport="80"/>
+            <Forwarding name="proxy 2.4.5" proto="1" hostip="127.0.0.1" hostport="2245" guestip="10.0.2.7" guestport="22"/>
+            <Forwarding name="sles 12.3" proto="1" hostip="127.0.0.1" hostport="22123" guestip="10.0.2.20" guestport="22"/>
+            <Forwarding name="suse12.1 http" proto="1" hostip="127.0.0.1" hostport="1017" guestip="10.0.2.17" guestport="80"/>
+            <Forwarding name="suse12.1 ssh" proto="1" hostip="127.0.0.1" hostport="2017" guestip="10.0.2.17" guestport="22"/>
+            <Forwarding name="zabbix 3.4.x" proto="1" hostip="127.0.0.1" hostport="3034" guestip="10.0.2.5" guestport="3000"/>
+          </PortForwarding4>
+          <Mappings>
+            <Loopback4 address="127.0.0.1" offset="2"/>
+          </Mappings>
+        </NATNetwork>
+      </NATNetworks>

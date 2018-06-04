@@ -369,6 +369,34 @@ SHOW PROCEDURE STATUS; SHOW EVENTS;
 # | zabbix | e_part_manage | zabbix@localhost | SYSTEM    | RECURRING | NULL       | 1              | DAY            | 2011-08-08 04:00:00 | NULL | ENABLED |          1 | utf8                 | utf8_general_ci      | utf8_bin           |
 # +--------+---------------+------------------+-----------+-----------+------------+----------------+----------------+---------------------+------+---------+------------+----------------------+----------------------+--------------------+
 
+# how to test the partition task?
+mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
+use zabbix;
+show create table zabbix.history_uint\G
+
+# *************************** 1. row ***************************
+#        Table: history_uint
+# Create Table: CREATE TABLE `history_uint` (
+#   `itemid` bigint(20) unsigned NOT NULL,
+#   `clock` int(11) NOT NULL DEFAULT 0,
+#   `value` bigint(20) unsigned NOT NULL DEFAULT 0,
+#   `ns` int(11) NOT NULL DEFAULT 0,
+#   KEY `history_uint_1` (`itemid`,`clock`)
+# ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin
+#  PARTITION BY RANGE (`clock`)
+# (PARTITION `p2018___OLD` VALUES LESS THAN (1527811200) ENGINE = InnoDB,
+#  PARTITION `p2018_06_01` VALUES LESS THAN (1527897600) ENGINE = InnoDB,
+#  PARTITION `p2018_06_02` VALUES LESS THAN (1527984000) ENGINE = InnoDB,
+#  PARTITION `p2018_06_03` VALUES LESS THAN (1528070400) ENGINE = InnoDB,
+#  PARTITION `p2018_06_04` VALUES LESS THAN (1528156800) ENGINE = InnoDB,
+#  PARTITION `p2018_06_05` VALUES LESS THAN (1528243200) ENGINE = InnoDB,
+#  PARTITION `p2018_06_06` VALUES LESS THAN (1528329600) ENGINE = InnoDB)
+
+ALTER TABLE history_uint DROP PARTITION p2018_06_06;
+ALTER TABLE history_uint DROP PARTITION p2018_06_05;
+
+#ERROR 1318 (42000): Incorrect number of arguments for PROCEDURE zabbix.create_partition_by_day; expected 2, got 1
+
 
 
 
