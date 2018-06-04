@@ -333,8 +333,6 @@ bzcat $time.history.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_serve
 bzcat $time.trends.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
 bzcat $time.trends_uint.bz2 | sudo mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") zabbix
 
-
-
 systemctl enable {zabbix-server,zabbix-agent}
 systemctl start {zabbix-server,zabbix-agent}
 systemctl status {zabbix-server,zabbix-agent}
@@ -397,6 +395,34 @@ ALTER TABLE history_uint DROP PARTITION p2018_06_05;
 
 #ERROR 1318 (42000): Incorrect number of arguments for PROCEDURE zabbix.create_partition_by_day; expected 2, got 1
 
+#take a look of keep_history interval for all 7 tables
+select * from zabbix.manage_partitions;
+# +--------------+--------+--------------+---------------------+----------+
+# | tablename    | period | keep_history | last_updated        | comments |
+# +--------------+--------+--------------+---------------------+----------+
+# | history      | day    |           30 | 2018-06-04 06:35:13 |          |
+# | history_log  | day    |          120 | 2018-06-04 06:35:13 |          |
+# | history_str  | day    |          120 | 2018-06-04 06:35:13 |          |
+# | history_text | day    |          120 | 2018-06-04 06:35:13 |          |
+# | history_uint | day    |           30 | 2018-06-04 06:35:13 |          |
+# | trends       | month  |           24 | 2018-06-04 06:35:13 |          |
+# | trends_uint  | month  |           24 | 2018-06-04 06:35:13 |          |
+# +--------------+--------+--------------+---------------------+----------+
 
 
+#list procedures
+SHOW PROCEDURE STATUS\G
+# +--------+---------------------------+-----------+------------------+---------------------+---------------------+---------------+---------+----------------------+----------------------+--------------------+
+# | Db     | Name                      | Type      | Definer          | Modified            | Created             | Security_type | Comment | character_set_client | collation_connection | Database Collation |
+# +--------+---------------------------+-----------+------------------+---------------------+---------------------+---------------+---------+----------------------+----------------------+--------------------+
+# | zabbix | create_next_partitions    | PROCEDURE | zabbix@localhost | 2018-06-04 09:34:57 | 2018-06-04 09:34:57 | DEFINER       |         | utf8                 | utf8_general_ci      | utf8_bin           |
+# | zabbix | create_partition_by_day   | PROCEDURE | zabbix@localhost | 2018-06-04 09:35:11 | 2018-06-04 09:35:11 | DEFINER       |         | utf8                 | utf8_general_ci      | utf8_bin           |
+# | zabbix | create_partition_by_month | PROCEDURE | zabbix@localhost | 2018-06-04 09:35:17 | 2018-06-04 09:35:17 | DEFINER       |         | utf8                 | utf8_general_ci      | utf8_bin           |
+# | zabbix | drop_old_partition        | PROCEDURE | zabbix@localhost | 2018-06-04 09:35:30 | 2018-06-04 09:35:30 | DEFINER       |         | utf8                 | utf8_general_ci      | utf8_bin           |
+# | zabbix | drop_partitions           | PROCEDURE | zabbix@localhost | 2018-06-04 09:35:24 | 2018-06-04 09:35:24 | DEFINER       |         | utf8                 | utf8_general_ci      | utf8_bin           |
+# +--------+---------------------------+-----------+------------------+---------------------+---------------------+---------------+---------+----------------------+----------------------+--------------------+
+# 
+
+#manuallu invode parition creation
+CALL zabbix.create_next_partitions('zabbix');
 
