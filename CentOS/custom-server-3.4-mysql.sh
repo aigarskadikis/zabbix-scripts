@@ -243,3 +243,8 @@ echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAqkmrGeulxpX2NWr5cMUndl+wemjatXp5CSkxUn
 chmod -R 700 ~/.ssh
 
 yum -y install vim
+
+#decrease grup screen to 0 seconds
+sed -i "s/^GRUB_TIMEOUT=.$/GRUB_TIMEOUT=0/" /etc/default/grub
+grub2-mkconfig -o /boot/grub2/grub.cfg
+
