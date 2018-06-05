@@ -9,8 +9,11 @@ systemctl start firewalld
 
 firewall-cmd --permanent --add-service=http
 firewall-cmd --permanent --add-service=https
+firewall-cmd --permanent --add-service=mysql
 firewall-cmd --add-port=162/udp --permanent
 firewall-cmd --add-port=3000/tcp --permanent #for grafana reporting server https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-grafana-to-plot-beautiful-graphs-from-zabbix-on-centos-7
+firewall-cmd --add-port=10050/tcp --permanent
+firewall-cmd --add-port=10051/tcp --permanent
 firewall-cmd --reload
 
 #update system
@@ -72,16 +75,41 @@ zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -pTaL2gP
 if [ $? -ne 0 ]; then
 echo cannot insert zabbix sql shema into database
 else
-#check if there is existing password line in config
-grep "DBPassword=" /etc/zabbix/zabbix_server.conf
+
+#define server conf file
+server=/etc/zabbix/zabbix_server.conf
+
+grep "^DBPassword=" $server
 if [ $? -eq 0 ]; then
-#change the password
-sed -i "s/^.*DBPassword=.*$/DBPassword=TaL2gPU5U9FcCU2u/g" /etc/zabbix/zabbix_server.conf
+sed -i "s/^DBPassword=.*/DBPassword=TaL2gPU5U9FcCU2u/" $server #modifies already customized setting
+else
+ln=$(grep -n "DBPassword=" $server | egrep -o "^[0-9]+"); ln=$((ln+1)) #calculate the the line number after default setting
+sed -i "`echo $ln`iDBPassword=TaL2gPU5U9FcCU2u" $server #adds new line
+fi
+
+grep "^CacheUpdateFrequency=" $server
+if [ $? -eq 0 ]; then
+sed -i "s/^CacheUpdateFrequency=.*/CacheUpdateFrequency=4/" $server #modifies already customized setting
+else
+ln=$(grep -n "CacheUpdateFrequency=" $server | egrep -o "^[0-9]+"); ln=$((ln+1)) #calculate the the line number after default setting
+sed -i "`echo $ln`iCacheUpdateFrequency=4" $server #adds new line
 fi
 
 #show zabbix server conf file
-grep -v "^$\|^#" /etc/zabbix/zabbix_server.conf
+grep -v "^$\|^#" $server
 echo
+
+#define agent conf file
+agent=/etc/zabbix/zabbix_agentd.conf
+
+grep "^EnableRemoteCommands=" $agent
+if [ $? -eq 0 ]; then
+sed -i "s/^EnableRemoteCommands=.*/EnableRemoteCommands=1/" $agent #modifies already customized setting
+else
+ln=$(grep -n "EnableRemoteCommands=" $agent | egrep -o "^[0-9]+"); ln=$((ln+1)) #calculate the the line number after default setting
+sed -i "`echo $ln`iEnableRemoteCommands=1" $agent #adds new line
+fi
+
 
 systemctl status zabbix-server
 if [ $? -eq 3 ]; then
