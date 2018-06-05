@@ -28,7 +28,7 @@ useradd -g zabbix zabbix
 cd
 wget --no-check-certificate http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/1.8.20/zabbix-1.8.20.tar.gz
 tar -vzxf zabbix-1.8.20.tar.gz -C .
-cat ~/zabbix-1.8.20/misc/init.d/redhat/zabbix_agentd_ctl > /etc/init.d/zabbix-agent
+cat zabbix-1.8.20/misc/init.d/redhat/zabbix_agentd_ctl > /etc/init.d/zabbix-agent
 #set the base and pid according to system
 # base zabbix dir
 #BASEDIR=/usr/local
@@ -37,4 +37,12 @@ cat ~/zabbix-1.8.20/misc/init.d/redhat/zabbix_agentd_ctl > /etc/init.d/zabbix-ag
 sed -i "s/^BASEDIR=.*/BASEDIR=\/usr\/local/" /etc/init.d/zabbix-agent
 sed -i "s/^PIDFILE=.*/PIDFILE=\/tmp\/zabbix_agentd.pid/" /etc/init.d/zabbix-agent
 chmod +x /etc/init.d/zabbix-agent
+
+
+
+wget --no-check-certificate "https://ayera.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/1.0/zabbix-1.0.tar.gz"
+tar -vzxf zabbix-1.0.tar.gz -C .
+
+wget "http://master.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/1.1.1/zabbix-1.1.1.tar.gz"
+tar -vzxf zabbix-1.1.1.tar.gz -C .
 
