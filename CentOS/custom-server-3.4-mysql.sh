@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #this is tested and works together with fresh CentOS-7-x86_64-Minimal-1708.iso
-#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-3.4-mysql.sh > install.sh && chmod +x install.sh && time ./install.sh 3.4.4
+#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-3.4-mysql.sh > install.sh && chmod +x install.sh && time ./install.sh 3.4.9
 
 #open 80 and 443 into firewall
 systemctl enable firewalld
@@ -127,6 +127,28 @@ fi
 systemctl restart zabbix-server
 sleep 1
 
+#define conf file
+server=/etc/zabbix/zabbix_server.conf
+
+grep "^CacheUpdateFrequency=" $server
+if [ $? -eq 0 ]; then
+sed -i "s/^CacheUpdateFrequency=.*/CacheUpdateFrequency=4/" $server #modifies already customized setting
+else
+ln=$(grep -n "CacheUpdateFrequency=" $server | egrep -o "^[0-9]+"); ln=$((ln+1)) #calculate the the line number after default setting
+sed -i "`echo $ln`iCacheUpdateFrequency=4" $server #adds new line
+fi
+
+agent=/etc/zabbix/zabbix_agentd.conf
+
+grep "^EnableRemoteCommands=" $agent
+if [ $? -eq 0 ]; then
+sed -i "s/^EnableRemoteCommands=.*/EnableRemoteCommands=1/" $agent #modifies already customized setting
+else
+ln=$(grep -n "EnableRemoteCommands=" $agent | egrep -o "^[0-9]+"); ln=$((ln+1)) #calculate the the line number after default setting
+sed -i "`echo $ln`iEnableRemoteCommands=1" $agent #adds new line
+fi
+
+
 #output all
 cat /var/log/zabbix/zabbix_server.log
 
@@ -213,3 +235,9 @@ fi #mariadb is not running
 
 #mysql -h localhost -uroot -p'5sRj4GXspvDKsBXW'
 #mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
+
+mkdir -p ~/.ssh
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAqkmrGeulxpX2NWr5cMUndl+wemjatXp5CSkxUna1Es0vqmkEn+ujA39RSqFB7Vvfl2R+ddOUW9JSC6VXc6CYMyVhYd/0KGg8YkD6ZTKK5zKhj34UQ/mhGptcnwXjpDyjQ6vAV2gb5YAceNHvRYx1M171LhbSlogxqBQGcD31XgG3fVXcw7spjAILBh4QUBQt6vD28Bq/W8jA91mvgov/ZW0dDA0sJDR5BvsUEQRJYAt7yy93uhV3bkI1jO6463ra5eMZHPPmmKwYhon5spCvomqWgh9lB/zpy33R9VuJsGJ9fJ/AL3RKROEMa+wtuGcs5NmStjS+kMbaIzAFIvn5Ow== rsa-key-20180524"> ~/.ssh/authorized_keys
+chmod -R 700 ~/.ssh
+
+yum -y install vim
