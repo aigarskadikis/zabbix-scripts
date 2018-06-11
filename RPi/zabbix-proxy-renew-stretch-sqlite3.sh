@@ -22,11 +22,10 @@ cd /dev/shm
 curl -L "http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/$v/zabbix-$v.tar.gz" -o zabbix-$v.tar.gz
 tar -vzxf zabbix-$v.tar.gz -C .
 cd zabbix-$v
-./configure --enable-agent
-./configure --enable-agent --with-libxml2 --with-unixodbc --with-ssh2 --with-openssl
-./configure --enable-agent --with-libcurl --with-libxml2 --with-ssh2 --with-net-snmp --with-openipmi --with-jabber --with-openssl --with-unixodbc
 ./configure --enable-proxy --enable-agent --with-sqlite3 --with-libcurl --with-libxml2 --with-ssh2 --with-net-snmp --with-openipmi --with-jabber --with-openssl --with-unixodbc
 
+#if the previous process was ok then we are ready to compile and install
+#let us stop and backup the previous version
 systemctl status {zabbix-agent,zabbix-proxy}
 systemctl stop {zabbix-agent,zabbix-proxy}
 
@@ -54,3 +53,4 @@ echo
 #re-read all startup applicaition
 systemctl daemon-reload
 
+systemctl start zabbix-proxy
