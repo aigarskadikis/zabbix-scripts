@@ -42,7 +42,7 @@ cd /usr/local/bin && mkdir -p ~/$existing_version/$(pwd) && mv zabbix_sender ~/$
 #make a copy of zabbix_agentd.conf,zabbix_proxy.conf,zabbix_agentd.conf.d,zabbix_proxy.conf.d
 cd /usr/local/etc && mkdir -p ~/$existing_version/$(pwd) && cp -R * ~/$existing_version/$(pwd)
 
-cd /dev/shm/zabbix-*
+cd /dev/shm/zabbix-$v
 time make install
 
 echo
@@ -53,4 +53,4 @@ echo
 #re-read all startup applicaition
 systemctl daemon-reload
 
-systemctl start zabbix-proxy
+systemctl start {zabbix-agent,zabbix-proxy}
