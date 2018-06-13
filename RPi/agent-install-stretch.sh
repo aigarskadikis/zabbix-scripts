@@ -58,6 +58,8 @@ echo
 
 groupadd zabbix
 useradd -g zabbix zabbix
+usermod -a -G video zabbix
+
 
 cp /dev/shm/zabbix-$v/misc/init.d/debian/zabbix-agent /etc/init.d/
 ls -l /etc/init.d/zabbix*

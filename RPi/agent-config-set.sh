@@ -56,11 +56,19 @@ sed -i '/^Hostname=.*$/d' $agent
 
 #set hostname based on the lan mac
 com="system.run\[ifconfig eth0\|egrep -o \"..:..:.. \"\|sed \"s\|:\|\|g;s\|^\|RPiWorK\|\"\]"
+grep "^HostnameItem=" $agent
+if [ "$?" -eq "0" ]; then
+sed -i "s|^HostnameItem=.*$|HostnameItem=$com|" $agent
+else
+ln=$(grep -n "HostnameItem=system.hostname$" $agent | egrep -o "^[0-9]+"); ln=$((ln+1))
+sed -i "`echo $ln`iHostnameItem=$com" $agent
+fi
+
 grep "^HostMetadataItem=" $agent
 if [ "$?" -eq "0" ]; then
 sed -i "s|^HostMetadataItem=.*$|HostMetadataItem=$com|" $agent
 else
-ln=$(grep -n "HostMetadataItem=" $agent | egrep -o "^[0-9]+"); ln=$((ln+1))
+ln=$(grep -n "HostMetadataItem=$" $agent | egrep -o "^[0-9]+"); ln=$((ln+1))
 sed -i "`echo $ln`iHostMetadataItem=$com" $agent
 fi
 
