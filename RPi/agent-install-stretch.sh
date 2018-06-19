@@ -61,12 +61,30 @@ useradd -g zabbix zabbix
 usermod -a -G video zabbix
 
 
-cp /dev/shm/zabbix-$v/misc/init.d/debian/zabbix-agent /etc/init.d/
 ls -l /etc/init.d/zabbix*
 
+
+#start zabbix agent at reboot
+cat > /etc/init.d/zabbix-agent << EOF
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          zabbix-agent
+# Required-Start:    \$remote_fs \$network
+# Required-Stop:     \$remote_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start zabbix-agent daemon
+### END INIT INFO
+EOF
+grep -v "^#\!\/bin\/sh$" /dev/shm/zabbix-$v/misc/init.d/debian/zabbix-agent >> /etc/init.d/zabbix-agent
+chmod +x /etc/init.d/zabbix-agent
 
 #set the pid file on ram filesystem
 sed -i "s|tmp|dev\/shm|" /etc/init.d/zabbix-agent
 
 #re-read all startup applicaition
 systemctl daemon-reload
+
+#enable agent at startup
+systemctl enable zabbix-agent
+
