@@ -1,0 +1,3 @@
+
+
+curl -s -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"user.login","params":{"user":"Admin","password":"zabbix"},"id":1,"auth":null}' http://127.0.0.1/zabbix/api_jsonrpc.php | jq -r '.result'
