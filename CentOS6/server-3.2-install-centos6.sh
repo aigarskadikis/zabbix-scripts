@@ -76,15 +76,15 @@ chkconfig httpd on
 chkconfig --list | grep httpd
 echo $?
 
-
 #install zabbix repo
-rpm -Uvh http://repo.zabbix.com/zabbix/3.4/rhel/6/x86_64/zabbix-release-3.4-1.el6.noarch.rpm
+rpm -Uvh http://repo.zabbix.com/zabbix/3.2/rhel/6/x86_64/zabbix-release-3.2-1.el6.noarch.rpm
 echo $?
 
 #this bunch of code will set enabled=1 just exactly under [zabbix-deprecated] section in file /etc/yum.repos.d/zabbix.repo
 linenumber=$(awk '/zabbix-deprecated/ {print FNR}' /etc/yum.repos.d/zabbix.repo)
 countsnippetlines=$(grep -A100 "zabbix-deprecated" /etc/yum.repos.d/zabbix.repo | grep -m1 -B100 "enabled" | wc -l)
 magicline=$((linenumber+countsnippetlines-1))
+echo $magicline
 #set enabled=1 just under [zabbix-deprecated]
 sed -i "$(echo $magicline)s/^enabled=.*$/enabled=1/" /etc/yum.repos.d/zabbix.repo
 
@@ -222,7 +222,8 @@ rpm -ql zabbix-web | grep example.conf
 #/usr/share/doc/zabbix-web-3.4.8/httpd24-example.conf
 
 #install landing page
-cp /usr/share/doc/zabbix-web-3.4.8/httpd22-example.conf .
+cd /usr/share/doc/zabbix-web-*
+cp httpd22-example.conf /etc/httpd/conf.d
 
 #set selinux exceptions for httpd
 getsebool -a | grep "httpd_can_network_connect \|zabbix_can_network"
