@@ -14,7 +14,7 @@ apt-get install libssh2-1-dev -y #configure: error: SSH2 library not found
 apt-get install fping -y #/usr/sbin/fping: [2] No such file or directory
 
 #parametrize this script
-v=3.4.10
+v=3.4.11
 v=$1
 
 #go to ram drive for faster building
@@ -22,9 +22,6 @@ cd /dev/shm
 curl -L "http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/$v/zabbix-$v.tar.gz" -o zabbix-$v.tar.gz
 tar -vzxf zabbix-$v.tar.gz -C .
 cd zabbix-$v
-./configure --enable-agent
-./configure --enable-agent --with-libxml2 --with-unixodbc --with-ssh2 --with-openssl
-./configure --enable-agent --with-libcurl --with-libxml2 --with-ssh2 --with-net-snmp --with-openipmi --with-jabber --with-openssl --with-unixodbc
 ./configure --enable-proxy --enable-agent --with-sqlite3 --with-libcurl --with-libxml2 --with-ssh2 --with-net-snmp --with-openipmi --with-jabber --with-openssl --with-unixodbc
 
 systemctl status {zabbix-agent,zabbix-proxy}
