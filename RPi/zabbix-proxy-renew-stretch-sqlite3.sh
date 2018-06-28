@@ -14,7 +14,7 @@ apt-get install libssh2-1-dev -y #configure: error: SSH2 library not found
 apt-get install fping -y #/usr/sbin/fping: [2] No such file or directory
 
 #parametrize this script
-v=3.4.10
+v=3.4.11
 v=$1
 
 #go to ram drive for faster building
