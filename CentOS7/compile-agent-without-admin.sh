@@ -39,3 +39,6 @@ mkdir -p $dest
 ./configure --enable-agent --prefix=$dest -with-openssl=$dir/env -with-libpcre=$dir/env
 time make install
 
+cd ~/agent
+
+

@@ -139,17 +139,6 @@ fi
 grep -v "^$\|^#" $server
 echo
 
-#define agent conf file
-agent=/etc/zabbix/zabbix_agentd.conf
-
-grep "^EnableRemoteCommands=" $agent
-if [ $? -eq 0 ]; then
-sed -i "s/^EnableRemoteCommands=.*/EnableRemoteCommands=1/" $agent #modifies already customized setting
-else
-ln=$(grep -n "EnableRemoteCommands=" $agent | egrep -o "^[0-9]+"); ln=$((ln+1)) #calculate the the line number after default setting
-sed -i "`echo $ln`iEnableRemoteCommands=1" $agent #adds new line
-fi
-
 #restart zabbix server
 systemctl restart zabbix-server
 sleep 1
@@ -226,6 +215,18 @@ systemctl restart httpd
 systemctl enable httpd
 
 yum install zabbix-agent-$1 -y
+
+#define agent conf file
+agent=/etc/zabbix/zabbix_agentd.conf
+
+grep "^EnableRemoteCommands=" $agent
+if [ $? -eq 0 ]; then
+sed -i "s/^EnableRemoteCommands=.*/EnableRemoteCommands=1/" $agent #modifies already customized setting
+else
+ln=$(grep -n "EnableRemoteCommands=" $agent | egrep -o "^[0-9]+"); ln=$((ln+1)) #calculate the the line number after default setting
+sed -i "`echo $ln`iEnableRemoteCommands=1" $agent #adds new line
+fi
+
 yum install zabbix-sender-$1 -y
 yum install zabbix-get-$1 -y
 systemctl start zabbix-agent
@@ -245,7 +246,7 @@ mkdir -p ~/.ssh
 echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAqkmrGeulxpX2NWr5cMUndl+wemjatXp5CSkxUna1Es0vqmkEn+ujA39RSqFB7Vvfl2R+ddOUW9JSC6VXc6CYMyVhYd/0KGg8YkD6ZTKK5zKhj34UQ/mhGptcnwXjpDyjQ6vAV2gb5YAceNHvRYx1M171LhbSlogxqBQGcD31XgG3fVXcw7spjAILBh4QUBQt6vD28Bq/W8jA91mvgov/ZW0dDA0sJDR5BvsUEQRJYAt7yy93uhV3bkI1jO6463ra5eMZHPPmmKwYhon5spCvomqWgh9lB/zpy33R9VuJsGJ9fJ/AL3RKROEMa+wtuGcs5NmStjS+kMbaIzAFIvn5Ow== rsa-key-20180524"> ~/.ssh/authorized_keys
 chmod -R 700 ~/.ssh
 
-yum -y install vim
+yum -y install vim nmap
 
 #decrease grup screen to 0 seconds
 sed -i "s/^GRUB_TIMEOUT=.$/GRUB_TIMEOUT=0/" /etc/default/grub
