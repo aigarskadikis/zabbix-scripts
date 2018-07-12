@@ -79,7 +79,7 @@ echo cannot install zabbix repository
 else
 
 #install zabbix server which are supposed to use MySQL as a database
-yum install zabbix-server-mysql-$1 -y
+yum install zabbix-server-mysql -y
 if [ $? -ne 0 ]; then
 echo zabbix-server-mysql package not found
 else
@@ -152,7 +152,7 @@ yum-config-manager --enable rhel-7-server-optional-rpms
 
 #install zabbix frontend
 yum install httpd -y
-yum install zabbix-web-mysql-$1 -y
+yum install zabbix-web-mysql -y
 #configure timezone
 sed -i "s/^.*php_value date.timezone .*$/php_value date.timezone Europe\/Riga/" /etc/httpd/conf.d/zabbix.conf
 
@@ -214,7 +214,7 @@ EOF
 systemctl restart httpd
 systemctl enable httpd
 
-yum install zabbix-agent-$1 -y
+yum install zabbix-agent -y
 
 #define agent conf file
 agent=/etc/zabbix/zabbix_agentd.conf
@@ -227,8 +227,8 @@ ln=$(grep -n "EnableRemoteCommands=" $agent | egrep -o "^[0-9]+"); ln=$((ln+1)) 
 sed -i "`echo $ln`iEnableRemoteCommands=1" $agent #adds new line
 fi
 
-yum install zabbix-sender-$1 -y
-yum install zabbix-get-$1 -y
+yum install zabbix-sender -y
+yum install zabbix-get -y
 systemctl start zabbix-agent
 systemctl enable zabbix-agent
 fi #httpd document root not configured
