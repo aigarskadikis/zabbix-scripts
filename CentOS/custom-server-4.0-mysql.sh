@@ -73,7 +73,7 @@ mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | 
 systemctl enable mariadb
 
 #add zabbix 3.4 repository
-rpm -ivh http://repo.zabbix.com/zabbix/3.4/rhel/7/x86_64/zabbix-release-3.4-2.el7.noarch.rpm
+rpm -ivh http://repo.zabbix.com/zabbix/3.5/rhel/7/x86_64/zabbix-release-3.5-1.el7.noarch.rpm
 if [ $? -ne 0 ]; then
 echo cannot install zabbix repository
 else
