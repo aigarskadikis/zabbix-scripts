@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #this is tested and works together with fresh CentOS-7-x86_64-Minimal-1708.iso
-#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-mysql.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.0-1.1alpha8
+#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-mysql.sh > install.sh && chmod +x install.sh && time ./install.sh
 
 #open 80 and 443 into firewall
 systemctl enable firewalld
