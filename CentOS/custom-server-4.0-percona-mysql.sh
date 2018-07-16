@@ -16,58 +16,66 @@ firewall-cmd --add-port=10050/tcp --permanent
 firewall-cmd --add-port=10051/tcp --permanent
 firewall-cmd --reload
 
+# list current rules in firewall
+firewall-cmd --list-all
+
+# install percona MySQL repo
+rpm -ivh https://www.percona.com/redir/downloads/percona-release/redhat/0.1-6/percona-release-0.1-6.noarch.rpm
+
+# list available packages
+yum list | grep percona
+
 #update system
 yum update -y
 
-#install SELinux debuging utils
-yum install policycoreutils-python -y
+# install percona database server
+yum -y install Percona-Server-server-57
 
-#start mariadb service
-systemctl start mariadb
+#install SELinux debuging utils
+yum -y install policycoreutils-python
+
+# install vi colored text editor
+yum -y install vim
+
+
+#start mysqld service
+systemctl start mysqld
 if [ $? -ne 0 ]; then
-echo cannot start mariadb
+echo cannot start mysqld
 else
 
+
 #set new root password
-/usr/bin/mysqladmin -u root password '5sRj4GXspvDKsBXW'
+rootpw=$(grep "temporary password" /var/log/mysqld.log | sed "s/^.*localhost:.//")
+echo $rootpw
+
+/usr/bin/mysqladmin -u root -p password '5sRj4+Xsp)DKsBXW'
 if [ $? -ne 0 ]; then
-echo cannot set root password for mariadb
+echo cannot set root password for mysql
 else
 
 #show existing databases
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | grep zabbix
+mysql -h localhost -uroot -p'5sRj4+Xsp)DKsBXW' -P 3306 -s <<< 'show databases;' | grep zabbix
 if [ $? -eq 0 ]; then
 echo zabbix database already exist. cannot continue
 else
 #create zabbix database
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'create database zabbix character set utf8 collate utf8_bin;'
+mysql -h localhost -uroot -p'5sRj4+Xsp)DKsBXW' -P 3306 -s <<< 'create database zabbix character set utf8 collate utf8_bin;'
 
 #create user zabbix and allow user to connect to the database with only from localhost
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
+mysql -h localhost -uroot -p'5sRj4+Xsp)DKsBXW' -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "wYbUV$R3;pd7v}Xk";'
 
 #create user for partitioning
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix_part@localhost identified by "dwyQv5X3G6WwtYKg";'
-
-#GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'; FLUSH PRIVILEGES;
-#GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.2.2'; FLUSH PRIVILEGES; SHOW GRANTS;
-#SHOW GRANTS FOR 'zabbix'@'10.0.2.2';
-#GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.2.5'; FLUSH PRIVILEGES; SHOW GRANTS;
-#grant all privileges on zabbix.* to 'zabbix'@'%';
-
-#Allow everyone to connect
-#mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
-
-#grant all privileges on *.* to 'zabbix'@'10.0.2.2' identified by "TaL2gPU5U9FcCU2u"; FLUSH PRIVILEGES; SHOW GRANTS;
-
+mysql -h localhost -uroot -p'5sRj4+Xsp)DKsBXW' -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix_part@localhost identified by "6>5}EGUw=JdaC@>E";'
 
 #refresh permissions
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'flush privileges;'
+mysql -h localhost -uroot -p'5sRj4+Xsp)DKsBXW' -P 3306 -s <<< 'flush privileges;'
 
 #show existing databases
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | grep zabbix
+mysql -h localhost -uroot -p'5sRj4+Xsp)DKsBXW' -P 3306 -s <<< 'show databases;' | grep zabbix
 
 #enable to start MySQL automatically at next boot
-systemctl enable mariadb
+systemctl enable mysqld
 
 #add zabbix 3.4 repository
 rpm -ivh http://repo.zabbix.com/zabbix/3.5/rhel/7/x86_64/zabbix-release-3.5-1.el7.noarch.rpm
@@ -77,13 +85,14 @@ else
 
 #install zabbix server which are supposed to use MySQL as a database
 yum install zabbix-server-mysql -y
+
 if [ $? -ne 0 ]; then
 echo zabbix-server-mysql package not found
 else
 
 #create zabbix database structure
 ls -l /usr/share/doc/zabbix-server-mysql*/
-zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -pTaL2gPU5U9FcCU2u zabbix
+zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -p'wYbUV$R3;pd7v}Xk' zabbix
 if [ $? -ne 0 ]; then
 echo cannot insert zabbix sql shema into database
 else
@@ -118,10 +127,10 @@ server=/etc/zabbix/zabbix_server.conf
 
 grep "^DBPassword=" $server
 if [ $? -eq 0 ]; then
-sed -i "s/^DBPassword=.*/DBPassword=TaL2gPU5U9FcCU2u/" $server #modifies already customized setting
+sed -i "s/^DBPassword=.*/DBPassword=wYbUV$R3;pd7v}Xk/" $server #modifies already customized setting
 else
 ln=$(grep -n "DBPassword=" $server | egrep -o "^[0-9]+"); ln=$((ln+1)) #calculate the the line number after default setting
-sed -i "`echo $ln`iDBPassword=TaL2gPU5U9FcCU2u" $server #adds new line
+sed -i "`echo $ln`iDBPassword=wYbUV$R3;pd7v}Xk" $server #adds new line
 fi
 
 grep "^CacheUpdateFrequency=" $server
@@ -144,7 +153,7 @@ sleep 1
 cat /var/log/zabbix/zabbix_server.log
 
 #enable rhel-7-server-optional-rpms repository. This is neccessary to successfully install frontend
-yum install yum-utils -y
+yum -y install yum-utils
 yum-config-manager --enable rhel-7-server-optional-rpms
 
 #install zabbix frontend
@@ -196,7 +205,7 @@ global \$DB;
 \$DB['PORT']     = '0';
 \$DB['DATABASE'] = 'zabbix';
 \$DB['USER']     = 'zabbix';
-\$DB['PASSWORD'] = 'TaL2gPU5U9FcCU2u';
+\$DB['PASSWORD'] = 'wYbUV\$R3;pd7v}Xk';
 
 // Schema name. Used for IBM DB2 and PostgreSQL.
 \$DB['SCHEMA'] = '';
@@ -233,8 +242,8 @@ fi #cannot insert zabbix sql shema into database
 fi #zabbix-server-mysql package not found
 fi #cannot install zabbix repository
 fi #zabbix database already exist
-fi #cannot set root password for mariadb
-fi #mariadb is not running
+fi #cannot set root password for mysqld
+fi #mysqld is not running
 
 #mysql -h localhost -uroot -p'5sRj4GXspvDKsBXW'
 #mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
@@ -244,7 +253,7 @@ mkdir -p ~/.ssh
 echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"> ~/.ssh/authorized_keys
 chmod -R 700 ~/.ssh
 
-yum -y install vim nmap
+yum -y install nmap
 
 #decrease grup screen to 0 seconds
 sed -i "s/^GRUB_TIMEOUT=.$/GRUB_TIMEOUT=0/" /etc/default/grub
