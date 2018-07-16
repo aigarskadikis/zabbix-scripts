@@ -39,6 +39,17 @@ cd zabbix-$zabbixagentver
 ./configure --enable-agent --with-openssl=/usr/local/ssl
 time make install
 
+# test if anything is working
+
+# create group and user
+groupadd zabbix
+useradd -g zabbix zabbix
+
+su zabbix -s /bin/bash
+
+cd /usr/local/sbin
+
+./zabbix_agentd -c ../etc/zabbix_agentd.conf -f
 
 # appendix
 # with openssl version 1.1.0h there will be error:
