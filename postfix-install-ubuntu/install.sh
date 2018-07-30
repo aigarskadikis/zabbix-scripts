@@ -15,8 +15,10 @@ apt-get -y install logcheck
 
 find / -name externalscripts
 
+# move to external scripts dir
 cd /usr/lib/zabbix/externalscripts
 
+# download file:
 wget https://raw.githubusercontent.com/oscm/zabbix/master/postfix/postfix
 
 # ubuntu keeps the log in a bit different format
