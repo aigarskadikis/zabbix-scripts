@@ -51,18 +51,6 @@ mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privilege
 #create user for partitioning
 mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix_part@localhost identified by "dwyQv5X3G6WwtYKg";'
 
-#GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'; FLUSH PRIVILEGES;
-#GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.2.2'; FLUSH PRIVILEGES; SHOW GRANTS;
-#SHOW GRANTS FOR 'zabbix'@'10.0.2.2';
-#GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.2.5'; FLUSH PRIVILEGES; SHOW GRANTS;
-#grant all privileges on zabbix.* to 'zabbix'@'%';
-
-#Allow everyone to connect
-#mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
-
-#grant all privileges on *.* to 'zabbix'@'10.0.2.2' identified by "TaL2gPU5U9FcCU2u"; FLUSH PRIVILEGES; SHOW GRANTS;
-
-
 #refresh permissions
 mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'flush privileges;'
 
@@ -161,6 +149,8 @@ setsebool -P httpd_can_network_connect on
 setsebool -P zabbix_can_network on
 getsebool -a | grep "httpd_can_network_connect \|zabbix_can_network"
 
+yum -y install policycoreutils-python
+cd
 curl https://support.zabbix.com/secure/attachment/53320/zabbix_server_add.te > zabbix_server_add.te
 checkmodule -M -m -o zabbix_server_add.mod zabbix_server_add.te
 semodule_package -m zabbix_server_add.mod -o zabbix_server_add.pp
@@ -243,7 +233,7 @@ fi #mariadb is not running
 #mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
 
 mkdir -p ~/.ssh
-echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAqkmrGeulxpX2NWr5cMUndl+wemjatXp5CSkxUna1Es0vqmkEn+ujA39RSqFB7Vvfl2R+ddOUW9JSC6VXc6CYMyVhYd/0KGg8YkD6ZTKK5zKhj34UQ/mhGptcnwXjpDyjQ6vAV2gb5YAceNHvRYx1M171LhbSlogxqBQGcD31XgG3fVXcw7spjAILBh4QUBQt6vD28Bq/W8jA91mvgov/ZW0dDA0sJDR5BvsUEQRJYAt7yy93uhV3bkI1jO6463ra5eMZHPPmmKwYhon5spCvomqWgh9lB/zpy33R9VuJsGJ9fJ/AL3RKROEMa+wtuGcs5NmStjS+kMbaIzAFIvn5Ow== rsa-key-20180524"> ~/.ssh/authorized_keys
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"> ~/.ssh/authorized_keys
 chmod -R 700 ~/.ssh
 
 yum -y install vim nmap
