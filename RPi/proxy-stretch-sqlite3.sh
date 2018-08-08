@@ -97,4 +97,8 @@ chmod +x /etc/init.d/zabbix-agent
 #re-read all startup applicaition
 systemctl daemon-reload
 
+groupadd zabbix
+useradd -g zabbix zabbix
+usermod -a -G video zabbix #to access custom metrics like [vcgencmd measure_temp]
+
 systemctl start {zabbix-agent,zabbix-proxy}
