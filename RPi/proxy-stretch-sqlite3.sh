@@ -21,7 +21,7 @@ apt-get -y install libssl-dev #configure: error: OpenSSL library libssl or libcr
 apt-get -y install libcurl4-openssl-dev #configure: error: Curl library not found
 apt-get -y install libpcre3-dev #configure: error: Unable to use libpcre (libpcre check failed)
 # oir install all together
-# apt-get -y install sqlite3 libsqlite3-dev libsnmp-dev libssh2-1-dev fping libiksemel-dev libxml2-dev unixodbc-dev libopenipmi-dev libevent-dev libssl-dev libcurl4-openssl-dev
+# apt-get -y install sqlite3 libsqlite3-dev libsnmp-dev libssh2-1-dev fping libiksemel-dev libxml2-dev unixodbc-dev libopenipmi-dev libevent-dev libssl-dev libcurl4-openssl-dev libpcre3-dev
 
 #parametrize this script
 v=3.4.12
