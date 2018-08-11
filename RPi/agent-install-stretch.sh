@@ -16,7 +16,7 @@ apt-get update -y
 
 
 #parametrize this script
-v=3.4.10
+v=3.4.11
 v=$1
 
 #go to ram drive for faster building
