@@ -47,10 +47,13 @@ yum -y install MariaDB-server MariaDB-client
 # During installation process MariaDB package will configure initial database and create redo log files with default file size. Remove these files: 
 rm -rf /var/lib/mysql/ib_logfile*
 
-cp /etc/my.cnf.d/server.cnf ~
-echo "IwojIFRoZXNlIGdyb3VwcyBhcmUgcmVhZCBieSBNYXJpYURCIHNlcnZlci4KIyBVc2UgaXQgZm9yIG9wdGlvbnMgdGhhdCBvbmx5IHRoZSBzZXJ2ZXIgKGJ1dCBub3QgY2xpZW50cykgc2hvdWxkIHNlZQojCiMgU2VlIHRoZSBleGFtcGxlcyBvZiBzZXJ2ZXIgbXkuY25mIGZpbGVzIGluIC91c3Ivc2hhcmUvbXlzcWwvCiMKCiMgdGhpcyBpcyByZWFkIGJ5IHRoZSBzdGFuZGFsb25lIGRhZW1vbiBhbmQgZW1iZWRkZWQgc2VydmVycwpbc2VydmVyXQoKIyB0aGlzIGlzIG9ubHkgZm9yIHRoZSBteXNxbGQgc3RhbmRhbG9uZSBkYWVtb24KW215c3FsZF0KdXNlciA9IG15c3FsCmxvY2FsX2luZmlsZSA9IDAKc3ltYm9saWNfbGlua3MgPSAwCiAKZGVmYXVsdC1zdG9yYWdlLWVuZ2luZSA9IElubm9EQgpza2lwLW5hbWUtcmVzb2x2ZQprZXlfYnVmZmVyX3NpemUgPSAzMk0KbWF4X2FsbG93ZWRfcGFja2V0ID0gMTI4TQp0YWJsZV9vcGVuX2NhY2hlID0gMTAyNAp0YWJsZV9kZWZpbml0aW9uX2NhY2hlID0gMTAyNAptYXhfY29ubmVjdGlvbnMgPSAyMDAwCmpvaW5fYnVmZmVyX3NpemUgPSAxTQpzb3J0X2J1ZmZlcl9zaXplID0gMk0KcmVhZF9idWZmZXJfc2l6ZSA9IDI1NksKcmVhZF9ybmRfYnVmZmVyX3NpemUgPSAyNTZLCm15aXNhbV9zb3J0X2J1ZmZlcl9zaXplID0gMU0KdGhyZWFkX2NhY2hlX3NpemUgPSA1MTIKcXVlcnlfY2FjaGVfdHlwZSA9IDAKb3Blbl9maWxlc19saW1pdCA9IDY1NTM1CndhaXRfdGltZW91dCA9IDg2NDAwCiAKb3B0aW1pemVyX3N3aXRjaD1pbmRleF9jb25kaXRpb25fcHVzaGRvd249b2ZmCiAKdG1wX3RhYmxlX3NpemUgPSA2NE0KbWF4X2hlYXBfdGFibGVfc2l6ZSA9IDY0TQogCmJpbmxvZ19mb3JtYXQ9bWl4ZWQKYmlubG9nX2NhY2hlX3NpemUgPSA2NE0KbWF4X2JpbmxvZ19zaXplID0gMUcKZXhwaXJlX2xvZ3NfZGF5cyA9IDMKIAppbm5vZGJfYnVmZmVyX3Bvb2xfc2l6ZSA9IDFHCmlubm9kYl9sb2dfZmlsZV9zaXplID0gMjU2TQppbm5vZGJfbG9nX2J1ZmZlcl9zaXplID0gMTI4TQppbm5vZGJfZmlsZV9wZXJfdGFibGUgPSAxCmlubm9kYl9mbHVzaF9tZXRob2QgPSBPX0RJUkVDVAppbm5vZGJfYnVmZmVyX3Bvb2xfaW5zdGFuY2VzID0gOAppbm5vZGJfd3JpdGVfaW9fdGhyZWFkcyA9IDgKaW5ub2RiX3JlYWRfaW9fdGhyZWFkcyA9IDgKaW5ub2RiX2FkYXB0aXZlX2ZsdXNoaW5nID0gMQppbm5vZGJfbG9ja193YWl0X3RpbWVvdXQgPSA1MAogCmlubm9kYl9mbHVzaF9sb2dfYXRfdHJ4X2NvbW1pdCA9IDIKIAppbm5vZGJfaW9fY2FwYWNpdHkgPSAyMDAwCmlubm9kYl9pb19jYXBhY2l0eV9tYXggPSAyNTAwCmlubm9kYl9mbHVzaF9uZWlnaGJvcnMgPSAwCiAKaW5ub2RiX2NoZWNrc3VtcyA9IDEKaW5ub2RiX2RvdWJsZXdyaXRlID0gMQppbm5vZGJfc3VwcG9ydF94YSA9IDAKaW5ub2RiX3RocmVhZF9jb25jdXJyZW5jeSA9IDAKIAppbm5vZGJfcHVyZ2VfdGhyZWFkcyA9IDQKIApndGlkX2RvbWFpbl9pZCA9IDEKc2VydmVyX2lkID0gMQpiaW5sb2dfY2hlY2tzdW0gPSBjcmMzMgogCmlubm9kYl9scnVfc2Nhbl9kZXB0aCA9IDUxMgogCmlubm9kYl9zdGF0c19vbl9tZXRhZGF0YSA9IDAKaW5ub2RiX3N0YXRzX3NhbXBsZV9wYWdlcyA9IDMyCgojCiMgKiBHYWxlcmEtcmVsYXRlZCBzZXR0aW5ncwojCltnYWxlcmFdCiMgTWFuZGF0b3J5IHNldHRpbmdzCiN3c3JlcF9vbj1PTgojd3NyZXBfcHJvdmlkZXI9CiN3c3JlcF9jbHVzdGVyX2FkZHJlc3M9CiNiaW5sb2dfZm9ybWF0PXJvdwojZGVmYXVsdF9zdG9yYWdlX2VuZ2luZT1Jbm5vREIKI2lubm9kYl9hdXRvaW5jX2xvY2tfbW9kZT0yCiMKIyBBbGxvdyBzZXJ2ZXIgdG8gYWNjZXB0IGNvbm5lY3Rpb25zIG9uIGFsbCBpbnRlcmZhY2VzLgojCiNiaW5kLWFkZHJlc3M9MC4wLjAuMAojCiMgT3B0aW9uYWwgc2V0dGluZwojd3NyZXBfc2xhdmVfdGhyZWFkcz0xCiNpbm5vZGJfZmx1c2hfbG9nX2F0X3RyeF9jb21taXQ9MAoKIyB0aGlzIGlzIG9ubHkgZm9yIGVtYmVkZGVkIHNlcnZlcgpbZW1iZWRkZWRdCgojIFRoaXMgZ3JvdXAgaXMgb25seSByZWFkIGJ5IE1hcmlhREIgc2VydmVycywgbm90IGJ5IE15U1FMLgojIElmIHlvdSB1c2UgdGhlIHNhbWUgLmNuZiBmaWxlIGZvciBNeVNRTCBhbmQgTWFyaWFEQiwKIyB5b3UgY2FuIHB1dCBNYXJpYURCLW9ubHkgb3B0aW9ucyBoZXJlClttYXJpYWRiXQoKIyBUaGlzIGdyb3VwIGlzIG9ubHkgcmVhZCBieSBNYXJpYURCLTEwLjIgc2VydmVycy4KIyBJZiB5b3UgdXNlIHRoZSBzYW1lIC5jbmYgZmlsZSBmb3IgTWFyaWFEQiBvZiBkaWZmZXJlbnQgdmVyc2lvbnMsCiMgdXNlIHRoaXMgZ3JvdXAgZm9yIG9wdGlvbnMgdGhhdCBvbGRlciBzZXJ2ZXJzIGRvbid0IHVuZGVyc3RhbmQKW21hcmlhZGItMTAuMl0KCg==" | base64 --decode > /etc/my.cnf.d/server.cnf
-sed -i "s/^server_id.*$/server_id = 1/" /etc/my.cnf.d/server.cnf
-grep server_id /etc/my.cnf.d/server.cnf
+vim /etc/my.cnf.d/server.cnf
+# make sure [mysqld] section contains:
+log-bin
+server_id = 1
+log-basename=master1
+
+
 
 systemctl restart mariadb
 systemctl status mariadb
@@ -70,19 +73,50 @@ mysql -ureplicator -preplicator -h10.0.2.81
 
 # [run on node1. set the permissions]
 GRANT REPLICATION SLAVE ON *.* TO 'replicator'@'10.0.2.82' identified by 'replicator'; FLUSH PRIVILEGES;
-# [test the accesss on node2]
+
+# [test if node2 can access node1]
 mysql -ureplicator -preplicator -h10.0.2.81
 
-# test if node1 can access node2
+# [test if node1 can access node2
 mysql -ureplicator -preplicator -h10.0.2.82
 
 # [run on node2]
 GRANT REPLICATION SLAVE ON *.* TO 'replicator'@'10.0.2.81' identified by 'replicator'; FLUSH PRIVILEGES;
 
 
+FLUSH TABLES WITH READ LOCK;
+
+# create a dump. note we are using root account without password:
+cd
+mysqldump --master-data --gtid --all-databases > backup.sql
+
+# deliver the backup to second node
+scp ~/backup.sql root@10.0.2.82:~
+
+restoru
+
+otrai datubāzei uzlike māsteru
+
+pirmai datubāsei uzliek māster
+
+# [run on node1]
+SHOW SLAVE STATUS;
 STOP SLAVE;
 CHANGE MASTER TO master_host="10.0.2.82", master_port=3306, master_user="replicator", master_password="replicator", master_use_gtid=current_pos;
 START SLAVE;
+SHOW SLAVE STATUS\G;
+
+# Got fatal error 1236 from master when reading data from binary log: 'Binary log is not open'
+# Slave_SQL_Running_State: Slave has read all relay log; waiting for the slave I/O thread to update it
+
+# [run on node2]
+SHOW SLAVE STATUS;
+STOP SLAVE;
+CHANGE MASTER TO master_host="10.0.2.81", master_port=3306, master_user="replicator", master_password="replicator", master_use_gtid=current_pos;
+START SLAVE;
+SHOW SLAVE STATUS\G;
+
+
 
 
 
@@ -92,4 +126,8 @@ create database zabbix character set utf8 collate utf8_bin;
 show databases;
 
 
+UNLOCK TABLES;
+# stop slave;
 
+# reset slave
+# reset master
