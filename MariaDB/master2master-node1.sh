@@ -40,6 +40,9 @@ yum makecache
 # install mariadb server
 yum -y install MariaDB-server MariaDB-client
 
+
+systemctl stop maridb
+
 # During installation process MariaDB package will configure initial database and create redo log files with default file size. Remove these files: 
 rm -rf /var/lib/mysql/ib_logfile*
 
@@ -53,6 +56,17 @@ systemctl restart mariadb
 systemctl status mariadb
 systemctl enable mariadb
 
+vim /etc/my.cnf.d/server.cnf
+# make sure [mysqld] section contains:
+log-bin
+server_id = 2
+log-basename=master2
+
+systemctl restart mariadb
+systemctl status mariadb
+systemctl enable mariadb
+
+
 # open mysql
 mysql
 
@@ -62,21 +76,9 @@ show slave status\G;
 # check the ip address of host
 system ip a
 
-# [run on node1. set the permissions]
-GRANT REPLICATION SLAVE ON *.* TO 'replicator'@'10.0.2.81' identified by 'replicator'; FLUSH PRIVILEGES;
-GRANT REPLICATION SLAVE ON *.* TO 'replicator'@'10.0.2.82' identified by 'replicator'; FLUSH PRIVILEGES;
-
-
-# [test if node2 can access node1]
-mysql -ureplicator -preplicator -h10.0.2.81
-
-# [test if node1 can access node2
-mysql -ureplicator -preplicator -h10.0.2.82
-
-# [run on node2]
-GRANT REPLICATION SLAVE ON *.* TO 'replicator'@'10.0.2.81' identified by 'replicator'; FLUSH PRIVILEGES;
-
-
+# write all hosts where from where this database must be accessible
+mysql <<< 'GRANT REPLICATION SLAVE ON *.* TO "replicator"@"10.0.2.82" identified by "replicator"; FLUSH PRIVILEGES;'
+# set database tables in read only mode
 mysql <<< 'FLUSH TABLES WITH READ LOCK;'
 
 # create a dump. note we are using root account without password:
@@ -91,8 +93,11 @@ scp ~/backup.sql root@10.0.2.82:~
 # log in into 10.0.2.82
 
 # stop slave and reset the conf
+
+
 mysql <<< 'stop slave; reset slave;'
 
+cd
 # restore from dump
 cat backup.sql | mysql
 
@@ -107,6 +112,7 @@ mysql <<< 'start slave;'
 mysql <<< 'show slave status\G;'
 
 
+
 # test if the replication works. lets create on node1
 mysql <<< 'create database zabbix character set utf8 collate utf8_bin;'
 
@@ -114,14 +120,10 @@ mysql <<< 'create database zabbix character set utf8 collate utf8_bin;'
 mysql <<< 'show databases;'
 # observe there is database with name 'zabbix'
 
-# configure node 1 to replicate the content from node2 
-# since we restore from backup then it is necesary to create access permissions for node2. run on node2:
+# run on node 2
 mysql <<< 'GRANT REPLICATION SLAVE ON *.* TO "replicator"@"10.0.2.81" identified by "replicator"; FLUSH PRIVILEGES;'
-# run on [node1]
 
-# try to log in from node 1
-mysql -ureplicator -preplicator -h10.0.2.82
-
+# run on node 1
 mysql <<< 'stop slave; reset slave;'
 mysql <<< 'CHANGE MASTER TO master_host="10.0.2.82", master_port=3306, master_user="replicator", master_password="replicator", master_use_gtid=slave_pos;'
 mysql <<< 'start slave;'
@@ -132,13 +134,18 @@ mysql <<< 'show slave status\G;'
 
 
 
+mysql <<< 'UNLOCK TABLES;'
 
-UNLOCK TABLES;
+
+
 # stop slave;
 
 # reset slave
 # reset master
 
+create database zabbix character set utf8 collate utf8_bin;
+show databases;
+drop database zabbix;
 
 # Got fatal error 1236 from master when reading data from binary log: 'Binary log is not open'
 # Slave_SQL_Running_State: Slave has read all relay log; waiting for the slave I/O thread to update it
