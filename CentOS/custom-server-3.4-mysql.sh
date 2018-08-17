@@ -25,8 +25,15 @@ yum install policycoreutils-python -y
 # rurn of SELinux
 setenforce 0 && sed -i "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config && getenforce
 
-#install mariadb (mysql database engine for CentOS 7)
-yum install mariadb-server -y
+# add MariaDB repo from http://downloads.mariadb.org/mariadb/repositories/
+echo "IyBNYXJpYURCIDEwLjIgQ2VudE9TIHJlcG9zaXRvcnkgbGlzdCAtIGNyZWF0ZWQgMjAxOC0wOC0xMyAwNjozOSBVVEMKIyBodHRwOi8vZG93bmxvYWRzLm1hcmlhZGIub3JnL21hcmlhZGIvcmVwb3NpdG9yaWVzLwpbbWFyaWFkYl0KbmFtZSA9IE1hcmlhREIKYmFzZXVybCA9IGh0dHA6Ly95dW0ubWFyaWFkYi5vcmcvMTAuMi9jZW50b3M3LWFtZDY0CmdwZ2tleT1odHRwczovL3l1bS5tYXJpYWRiLm9yZy9SUE0tR1BHLUtFWS1NYXJpYURCCmdwZ2NoZWNrPTEK" | base64 --decode > /etc/yum.repos.d/MariaDB.repo
+cat /etc/yum.repos.d/MariaDB.repo
+
+# generate cache
+yum makecache
+
+# install mariadb server
+yum -y install MariaDB-server MariaDB-client
 
 #start mariadb service
 systemctl start mariadb
