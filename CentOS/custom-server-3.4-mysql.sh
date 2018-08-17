@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #this is tested and works together with fresh CentOS-7-x86_64-Minimal-1708.iso
-#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-3.4-mysql.sh > install.sh && chmod +x install.sh && time ./install.sh 3.4.11
+#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-3.4-mysql.sh > install.sh && chmod +x install.sh && time ./install.sh 3.4.12
 
 #open 80 and 443 into firewall
 systemctl enable firewalld
@@ -21,6 +21,9 @@ yum update -y
 
 #install SELinux debuging utils
 yum install policycoreutils-python -y
+
+# rurn of SELinux
+setenforce 0 && sed -i "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config && getenforce
 
 #install mariadb (mysql database engine for CentOS 7)
 yum install mariadb-server -y
@@ -161,10 +164,10 @@ setsebool -P httpd_can_network_connect on
 setsebool -P zabbix_can_network on
 getsebool -a | grep "httpd_can_network_connect \|zabbix_can_network"
 
-curl https://support.zabbix.com/secure/attachment/53320/zabbix_server_add.te > zabbix_server_add.te
-checkmodule -M -m -o zabbix_server_add.mod zabbix_server_add.te
-semodule_package -m zabbix_server_add.mod -o zabbix_server_add.pp
-semodule -i zabbix_server_add.pp
+# curl https://support.zabbix.com/secure/attachment/53320/zabbix_server_add.te > zabbix_server_add.te
+# checkmodule -M -m -o zabbix_server_add.mod zabbix_server_add.te
+# semodule_package -m zabbix_server_add.mod -o zabbix_server_add.pp
+# semodule -i zabbix_server_add.pp
 
 #configure zabbix to host on root
 grep "^Alias" /etc/httpd/conf.d/zabbix.conf
@@ -243,7 +246,7 @@ fi #mariadb is not running
 #mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
 
 mkdir -p ~/.ssh
-echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAqkmrGeulxpX2NWr5cMUndl+wemjatXp5CSkxUna1Es0vqmkEn+ujA39RSqFB7Vvfl2R+ddOUW9JSC6VXc6CYMyVhYd/0KGg8YkD6ZTKK5zKhj34UQ/mhGptcnwXjpDyjQ6vAV2gb5YAceNHvRYx1M171LhbSlogxqBQGcD31XgG3fVXcw7spjAILBh4QUBQt6vD28Bq/W8jA91mvgov/ZW0dDA0sJDR5BvsUEQRJYAt7yy93uhV3bkI1jO6463ra5eMZHPPmmKwYhon5spCvomqWgh9lB/zpy33R9VuJsGJ9fJ/AL3RKROEMa+wtuGcs5NmStjS+kMbaIzAFIvn5Ow== rsa-key-20180524"> ~/.ssh/authorized_keys
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== imported-openssh-key"> ~/.ssh/authorized_keys
 chmod -R 700 ~/.ssh
 
 yum -y install vim nmap

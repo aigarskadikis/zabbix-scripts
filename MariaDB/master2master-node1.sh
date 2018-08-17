@@ -70,7 +70,7 @@ systemctl enable mariadb
 # open mysql
 mysql
 
-show variables like 'server_id';
+mysql <<< 'show variables like "server_id";'
 show slave status\G;
 
 # check the ip address of host
@@ -94,13 +94,12 @@ scp ~/backup.sql root@10.0.2.82:~
 
 # stop slave and reset the conf
 
-
-mysql <<< 'stop slave; reset slave;'
-
 cd
 # restore from dump
 cat backup.sql | mysql
 
+
+mysql <<< 'stop slave; reset slave;'
 
 # change the master for node2
 mysql <<< 'CHANGE MASTER TO master_host="10.0.2.81", master_port=3306, master_user="replicator", master_password="replicator", master_use_gtid=slave_pos;'
@@ -136,6 +135,7 @@ mysql <<< 'show slave status\G;'
 
 mysql <<< 'UNLOCK TABLES;'
 
+mysql <<< 'drop database zabbix;'
 
 
 # stop slave;
