@@ -8,9 +8,7 @@ systemctl enable firewalld && systemctl start firewalld
 
 firewall-cmd --permanent --add-service=http
 firewall-cmd --permanent --add-service=https
-firewall-cmd --permanent --add-service=mysql
 firewall-cmd --add-port=162/udp --permanent
-firewall-cmd --add-port=3000/tcp --permanent #for grafana reporting server https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-grafana-to-plot-beautiful-graphs-from-zabbix-on-centos-7
 firewall-cmd --add-port=10050/tcp --permanent
 firewall-cmd --add-port=10051/tcp --permanent
 firewall-cmd --reload
@@ -24,41 +22,26 @@ yum install policycoreutils-python -y
 # rurn of SELinux
 setenforce 0 && sed -i "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config && getenforce
 
-# add MariaDB repo from http://downloads.mariadb.org/mariadb/repositories/
+# install MariaDB repo
 echo "IyBNYXJpYURCIDEwLjIgQ2VudE9TIHJlcG9zaXRvcnkgbGlzdCAtIGNyZWF0ZWQgMjAxOC0wOC0xMyAwNjozOSBVVEMKIyBodHRwOi8vZG93bmxvYWRzLm1hcmlhZGIub3JnL21hcmlhZGIvcmVwb3NpdG9yaWVzLwpbbWFyaWFkYl0KbmFtZSA9IE1hcmlhREIKYmFzZXVybCA9IGh0dHA6Ly95dW0ubWFyaWFkYi5vcmcvMTAuMi9jZW50b3M3LWFtZDY0CmdwZ2tleT1odHRwczovL3l1bS5tYXJpYWRiLm9yZy9SUE0tR1BHLUtFWS1NYXJpYURCCmdwZ2NoZWNrPTEK" | base64 --decode > /etc/yum.repos.d/MariaDB.repo
 cat /etc/yum.repos.d/MariaDB.repo
 
 # generate cache
 yum makecache
 
-# install mariadb server
-yum -y install MariaDB-server MariaDB-client
-
-#start mariadb service
-systemctl start mariadb
-if [ $? -ne 0 ]; then
-echo cannot start mariadb
-else
-
-#set new root password
-/usr/bin/mysqladmin -u root password '5sRj4GXspvDKsBXW'
-if [ $? -ne 0 ]; then
-echo cannot set root password for mariadb
-else
+yum -y install MariaDB-client
 
 #show existing databases
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | grep zabbix
-if [ $? -eq 0 ]; then
-echo zabbix database already exist. cannot continue
-else
+mysql -h192.168.56.100 -uzabbix_web -preplicator -P 3306 -s <<< 'show databases;' | grep zabbix
+
 #create zabbix database
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'create database zabbix character set utf8 collate utf8_bin;'
+mysql -h192.168.56.100 -uzabbix_web -preplicator -P 3306 -s <<< 'create database zabbix character set utf8 collate utf8_bin;'
 
 #create user zabbix and allow user to connect to the database with only from localhost
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
+mysql -h192.168.56.100 -uzabbix_web -preplicator -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
 
 #create user for partitioning
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix_part@localhost identified by "dwyQv5X3G6WwtYKg";'
+mysql -h192.168.56.100 -uzabbix_web -preplicator -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix_part@localhost identified by "dwyQv5X3G6WwtYKg";'
 
 #GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'; FLUSH PRIVILEGES;
 #GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.2.2'; FLUSH PRIVILEGES; SHOW GRANTS;
@@ -67,16 +50,16 @@ mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privilege
 #grant all privileges on zabbix.* to 'zabbix'@'%';
 
 #Allow everyone to connect
-#mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
+#mysql -h192.168.56.100 -uzabbix_web -preplicator -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
 
 #grant all privileges on *.* to 'zabbix'@'10.0.2.2' identified by "TaL2gPU5U9FcCU2u"; FLUSH PRIVILEGES; SHOW GRANTS;
 
 
 #refresh permissions
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'flush privileges;'
+mysql -h192.168.56.100 -uzabbix_web -preplicator -P 3306 -s <<< 'flush privileges;'
 
 #show existing databases
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | grep zabbix
+mysql -h192.168.56.100 -uzabbix_web -preplicator -P 3306 -s <<< 'show databases;' | grep zabbix
 
 #enable to start MySQL automatically at next boot
 systemctl enable mariadb

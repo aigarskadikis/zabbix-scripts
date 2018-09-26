@@ -1,0 +1,90 @@
+#Open SNMP trap listener port 162 in firewall:
+firewall-cmd --add-port=162/udp --permanent
+firewall-cmd --reload
+
+#Turn off selinux [optional]:
+getenforce
+grep "^SELINUX=" /etc/selinux/config
+sed -i "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config
+setenforce 0
+
+#Install SNMP trap listener:
+yum -y install net-snmp-utils net-snmp-perl net-snmp nmap
+
+# Enable and strart the service:
+systemctl enable snmptrapd
+systemctl start snmptrapd
+systemctl status snmptrapd
+
+# Install 'netstat' command:
+yum -y install net-tools
+
+# Check the listening ports:
+netstat -tulpn | grep 162
+
+# Install "zabbix_trap_receiver.pl":
+echo "IyEvdXNyL2Jpbi9wZXJsCgojCiMgWmFiYml4CiMgQ29weXJpZ2h0IChDKSAyMDAxLTIwMTggWmFiYml4IFNJQQojCiMgVGhpcyBwcm9ncmFtIGlzIGZyZWUgc29mdHdhcmU7IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9vciBtb2RpZnkKIyBpdCB1bmRlciB0aGUgdGVybXMgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGFzIHB1Ymxpc2hlZCBieQojIHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb247IGVpdGhlciB2ZXJzaW9uIDIgb2YgdGhlIExpY2Vuc2UsIG9yCiMgKGF0IHlvdXIgb3B0aW9uKSBhbnkgbGF0ZXIgdmVyc2lvbi4KIwojIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0IHdpbGwgYmUgdXNlZnVsLAojIGJ1dCBXSVRIT1VUIEFOWSBXQVJSQU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mCiMgTUVSQ0hBTlRBQklMSVRZIG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiBTZWUgdGhlCiMgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgZm9yIG1vcmUgZGV0YWlscy4KIwojIFlvdSBzaG91bGQgaGF2ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlCiMgYWxvbmcgd2l0aCB0aGlzIHByb2dyYW07IGlmIG5vdCwgd3JpdGUgdG8gdGhlIEZyZWUgU29mdHdhcmUKIyBGb3VuZGF0aW9uLCBJbmMuLCA1MSBGcmFua2xpbiBTdHJlZXQsIEZpZnRoIEZsb29yLCBCb3N0b24sIE1BICAwMjExMC0xMzAxLCBVU0EuCiMKCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjCiMjIyMgQUJPVVQgWkFCQklYIFNOTVAgVFJBUCBSRUNFSVZFUiAjIyMjCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjCgojIFRoaXMgaXMgYW4gZW1iZWRkZWQgcGVybCBTTk1QIHRyYXBwZXIgcmVjZWl2ZXIgZGVzaWduZWQgZm9yIHNlbmRpbmcgZGF0YSB0byB0aGUgc2VydmVyLgojIFRoZSByZWNlaXZlciB3aWxsIHBhc3MgdGhlIHJlY2VpdmVkIFNOTVAgdHJhcHMgdG8gWmFiYml4IHNlcnZlciBvciBwcm94eSBydW5uaW5nIG9uIHRoZQojIHNhbWUgbWFjaGluZS4gUGxlYXNlIGNvbmZpZ3VyZSB0aGUgc2VydmVyL3Byb3h5IGFjY29yZGluZ2x5LgojCiMgUmVhZCBtb3JlIGFib3V0IHVzaW5nIGVtYmVkZGVkIHBlcmwgd2l0aCBOZXQtU05NUDoKIwlodHRwOi8vbmV0LXNubXAuc291cmNlZm9yZ2UubmV0L3dpa2kvaW5kZXgucGhwL1R1dDpFeHRlbmRpbmdfc25tcGRfdXNpbmdfcGVybAoKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwojIyMjIFpBQkJJWCBTTk1QIFRSQVAgUkVDRUlWRVIgQ09ORklHVVJBVElPTiAjIyMjCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKCiMjIyBPcHRpb246IFNOTVBUcmFwcGVyRmlsZQojCVRlbXBvcmFyeSBmaWxlIHVzZWQgZm9yIHBhc3NpbmcgZGF0YSB0byB0aGUgc2VydmVyIChvciBwcm94eSkuIE11c3QgYmUgdGhlIHNhbWUKIwlhcyBpbiB0aGUgc2VydmVyIChvciBwcm94eSkgY29uZmlndXJhdGlvbiBmaWxlLgojCiMgTWFuZGF0b3J5OiB5ZXMKIyBEZWZhdWx0OgokU05NUFRyYXBwZXJGaWxlID0gJy90bXAvemFiYml4X3RyYXBzLnRtcCc7CgojIyMgT3B0aW9uOiBEYXRlVGltZUZvcm1hdAojCVRoZSBkYXRlIHRpbWUgZm9ybWF0IGluIHN0cmZ0aW1lKCkgZm9ybWF0LiBQbGVhc2UgbWFrZSBzdXJlIHRvIGhhdmUgYSBjb3JyZXNwb25kaW5nCiMJbG9nIHRpbWUgZm9ybWF0IGZvciB0aGUgU05NUCB0cmFwIGl0ZW1zLgojCiMgTWFuZGF0b3J5OiB5ZXMKIyBEZWZhdWx0OgokRGF0ZVRpbWVGb3JtYXQgPSAnJUg6JU06JVMgJVkvJW0vJWQnOwoKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKIyMjIyBaQUJCSVggU05NUCBUUkFQIFJFQ0VJVkVSICMjIyMKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKCnVzZSBGY250bCBxdyhPX1dST05MWSBPX0FQUEVORCBPX0NSRUFUKTsKdXNlIFBPU0lYIHF3KHN0cmZ0aW1lKTsKCnN1YiB6YWJiaXhfcmVjZWl2ZXIKewoJbXkgKCVwZHVfaW5mbykgPSAleyRfWzBdfTsKCW15IChAdmFyYmluZHMpID0gQHskX1sxXX07CgoJIyBvcGVuIHRoZSBvdXRwdXQgZmlsZQoJdW5sZXNzIChzeXNvcGVuKE9VVFBVVF9GSUxFLCAkU05NUFRyYXBwZXJGaWxlLCBPX1dST05MWXxPX0FQUEVORHxPX0NSRUFULCAwNjY2KSkKCXsKCQlwcmludCBTVERFUlIgIkNhbm5vdCBvcGVuIFskU05NUFRyYXBwZXJGaWxlXTogJCFcbiI7CgkJcmV0dXJuIE5FVFNOTVBUUkFQRF9IQU5ETEVSX0ZBSUw7Cgl9CgoJIyBnZXQgdGhlIGhvc3QgbmFtZQoJbXkgJGhvc3RuYW1lID0gJHBkdV9pbmZveydyZWNlaXZlZGZyb20nfSB8fCAndW5rbm93bic7CglpZiAoJGhvc3RuYW1lIG5lICd1bmtub3duJykKCXsKCQkkaG9zdG5hbWUgPX4gL1xbKC4qPylcXS4qLzsgICAgICAgICAgICAgICAgICAgICMgZm9ybWF0OiAiVURQOiBbMTI3LjAuMC4xXTo0MTA3MC0+WzEyNy4wLjAuMV0iCgkJJGhvc3RuYW1lID0gJDEgfHwgJ3Vua25vd24nOwoJfQoKCSMgcHJpbnQgdHJhcCBoZWFkZXIKCSMgICAgICAgdGltZXN0YW1wIG11c3QgYmUgcGxhY2VkIGF0IHRoZSBiZWdnaW5pbmcgb2YgdGhlIGZpcnN0IGxpbmUgKGNhbiBiZSBvbWl0dGVkKQoJIyAgICAgICB0aGUgZmlyc3QgbGluZSBtdXN0IGluY2x1ZGUgdGhlIGhlYWRlciAiWkJYVFJBUCBbSVAvRE5TIGFkZHJlc3NdICIKCSMgICAgICAgICAgICAgICogSVAvRE5TIGFkZHJlc3MgaXMgdGhlIHVzZWQgdG8gZmluZCB0aGUgY29ycmVzcG9uZGluZyBTTk1QIHRyYXAgaXRlbXMKCSMgICAgICAgICAgICAgICogdGhpcyBoZWFkZXIgd2lsbCBiZSBjdXQgZHVyaW5nIHByb2Nlc3NpbmcgKHdpbGwgbm90IGFwcGVhciBpbiB0aGUgaXRlbSB2YWx1ZSkKCXByaW50ZiBPVVRQVVRfRklMRSAiJXMgWkJYVFJBUCAlc1xuIiwgc3RyZnRpbWUoJERhdGVUaW1lRm9ybWF0LCBsb2NhbHRpbWUpLCAkaG9zdG5hbWU7CgoJIyBwcmludCB0aGUgUERVIGluZm8KCXByaW50IE9VVFBVVF9GSUxFICJQRFUgSU5GTzpcbiI7Cglmb3JlYWNoIG15ICRrZXkoa2V5cyglcGR1X2luZm8pKQoJewoJCWlmICgkcGR1X2luZm97JGtleX0gIX4gL15bWzpwcmludDpdXSokLykKCQl7CgkJCW15ICRPY3RldEFzSGV4ID0gdW5wYWNrKCdIKicsICRwZHVfaW5mb3ska2V5fSk7CSMgY29udmVydCBvY3RldCBzdHJpbmcgdG8gaGV4CgkJCSRwZHVfaW5mb3ska2V5fSA9ICIweCRPY3RldEFzSGV4IjsJCSMgYXBwbHkgMHggcHJlZml4IGZvciBjb25zaXN0ZW5jeQoJCX0KCgkJcHJpbnRmIE9VVFBVVF9GSUxFICIgICUtMzBzICVzXG4iLCAka2V5LCAkcGR1X2luZm97JGtleX07Cgl9CgoJIyBwcmludCB0aGUgdmFyaWFibGUgYmluZGluZ3M6CglwcmludCBPVVRQVVRfRklMRSAiVkFSQklORFM6XG4iOwoJZm9yZWFjaCBteSAkeCAoQHZhcmJpbmRzKQoJewoJCXByaW50ZiBPVVRQVVRfRklMRSAiICAlLTMwcyB0eXBlPSUtMmQgdmFsdWU9JXNcbiIsICR4LT5bMF0sICR4LT5bMl0sICR4LT5bMV07Cgl9CgoJY2xvc2UgKE9VVFBVVF9GSUxFKTsKCglyZXR1cm4gTkVUU05NUFRSQVBEX0hBTkRMRVJfT0s7Cn0KCk5ldFNOTVA6OlRyYXBSZWNlaXZlcjo6cmVnaXN0ZXIoImFsbCIsIFwmemFiYml4X3JlY2VpdmVyKSBvcgoJZGllICJmYWlsZWQgdG8gcmVnaXN0ZXIgWmFiYml4IFNOTVAgdHJhcCByZWNlaXZlclxuIjsKCnByaW50IFNURE9VVCAiTG9hZGVkIFphYmJpeCBTTk1QIHRyYXAgcmVjZWl2ZXJcbiI7Cg==" | base64 --decode > /usr/bin/zabbix_trap_receiver.pl
+chmod +x /usr/bin/zabbix_trap_receiver.pl
+cp /etc/snmp/{snmptrapd.conf,snmptrapd.conf.`date +%Y%m%d%H%M`}
+ls -l /etc/snmp/snmptrapd.conf*
+echo "authCommunity execute public"> /etc/snmp/snmptrapd.conf
+echo "perl do \"/usr/bin/zabbix_trap_receiver.pl\";">> /etc/snmp/snmptrapd.conf
+cat /etc/snmp/snmptrapd.conf
+grep "zabbix_traps.tmp" /usr/bin/zabbix_trap_receiver.pl
+
+# print proxy conf
+grep -v "^$\|#" /etc/zabbix/zabbix_proxy.conf
+
+# Restart SNMP trap daemon:
+systemctl restart snmptrapd
+systemctl status snmptrapd
+
+# Enable Zabbix Trapper in "zabbix_proxy.conf":
+conf=$(find / -name "zabbix_proxy.conf" | grep "/etc/")
+echo $conf
+cp $conf $conf.`date +%Y%m%d%H%M`
+ls -l $conf*
+sed -i "s|^.*StartSNMPTrapper=.*$|StartSNMPTrapper=1|" $conf
+sed -i "s|^SNMPTrapperFile=.*$|SNMPTrapperFile=\/tmp\/zabbix_traps.tmp|" $conf
+grep -v "^$\|^#" $conf
+
+# Restart Zabbix Server:
+systemctl restart zabbix-proxy
+
+# Check if there is any listener:
+ps -aux | grep [s]nmp
+
+# restart services
+systemctl restart snmptrapd
+systemctl restart zabbix-proxy
+
+# Check if services are up and running:
+systemctl status {snmptrapd,zabbix-proxy}
+
+# Ckeck if proxy trapper process is started:
+grep "snmp trapper" /var/log/zabbix/zabbix_proxy.log
+
+# Send a test trap:
+ls -l /tmp # note down the /tmp/zabbix_traps.tmp do not exist
+
+# send test trap
+snmptrap -v 1 -c public 127.0.0.1 '.1.3.6.1.6.3.1.1.5.4' '0.0.0.0' 6 33 '55' .1.3.6.1.6.3.1.1.5.4 s "eth0"
+
+# now the file must exist
+ls -l /tmp/zabbix_traps.tmp
+
+# note the permissions that 'others' can access this file
+
+snmptrap -v 1 -c public 127.0.0.1 '1.2.3.4.5.6' '192.193.194.195' 6 99 '55' 1.11.12.13.14.15  s "teststring"
+
+# After this command there should be instant content into:
+cat /tmp/zabbix_traps.tmp
+
+# Also the zabbix server log should contain this trap:
+cat /var/log/zabbix/zabbix_proxy.log
+
+# create [snmptrap.fallback]on the same proxy
+
+grep denied /var/log/audit/audit.log
+setenforce 0
+

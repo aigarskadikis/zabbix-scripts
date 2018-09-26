@@ -5,6 +5,9 @@ mkdir -p ~/.ssh && echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAqkmrGeulxpX2NWr5cMU
 #enter zabbix database in a safe way
 mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
 
+# browse sqlite database
+sqlite3 /dev/shm/zabbix.db.sqlite3
+
 #open udp 162 port
 systemctl enable firewalld && systemctl start firewalld && firewall-cmd --add-port=162/udp --permanent && firewall-cmd --reload
 systemctl enable firewalld && systemctl start firewalld && firewall-cmd --add-port=161/udp --permanent && firewall-cmd --reload

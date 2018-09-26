@@ -1,10 +1,11 @@
 #!/bin/bash
 
 #this is tested and works together with fresh CentOS-7-x86_64-Minimal-1708.iso
-#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-3.4-mysql.sh > install.sh && chmod +x install.sh && time ./install.sh 3.4.12
+#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-mysql-version.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.0alpha8
 
 #open 80 and 443 into firewall
-systemctl enable firewalld && systemctl start firewalld
+systemctl enable firewalld
+systemctl start firewalld
 
 firewall-cmd --permanent --add-service=http
 firewall-cmd --permanent --add-service=https
@@ -21,18 +22,8 @@ yum update -y
 #install SELinux debuging utils
 yum install policycoreutils-python -y
 
-# rurn of SELinux
-setenforce 0 && sed -i "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config && getenforce
-
-# add MariaDB repo from http://downloads.mariadb.org/mariadb/repositories/
-echo "IyBNYXJpYURCIDEwLjIgQ2VudE9TIHJlcG9zaXRvcnkgbGlzdCAtIGNyZWF0ZWQgMjAxOC0wOC0xMyAwNjozOSBVVEMKIyBodHRwOi8vZG93bmxvYWRzLm1hcmlhZGIub3JnL21hcmlhZGIvcmVwb3NpdG9yaWVzLwpbbWFyaWFkYl0KbmFtZSA9IE1hcmlhREIKYmFzZXVybCA9IGh0dHA6Ly95dW0ubWFyaWFkYi5vcmcvMTAuMi9jZW50b3M3LWFtZDY0CmdwZ2tleT1odHRwczovL3l1bS5tYXJpYWRiLm9yZy9SUE0tR1BHLUtFWS1NYXJpYURCCmdwZ2NoZWNrPTEK" | base64 --decode > /etc/yum.repos.d/MariaDB.repo
-cat /etc/yum.repos.d/MariaDB.repo
-
-# generate cache
-yum makecache
-
-# install mariadb server
-yum -y install MariaDB-server MariaDB-client
+#install mariadb (mysql database engine for CentOS 7)
+yum install mariadb-server -y
 
 #start mariadb service
 systemctl start mariadb
@@ -60,18 +51,6 @@ mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privilege
 #create user for partitioning
 mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix_part@localhost identified by "dwyQv5X3G6WwtYKg";'
 
-#GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'; FLUSH PRIVILEGES;
-#GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.2.2'; FLUSH PRIVILEGES; SHOW GRANTS;
-#SHOW GRANTS FOR 'zabbix'@'10.0.2.2';
-#GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.2.5'; FLUSH PRIVILEGES; SHOW GRANTS;
-#grant all privileges on zabbix.* to 'zabbix'@'%';
-
-#Allow everyone to connect
-#mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
-
-#grant all privileges on *.* to 'zabbix'@'10.0.2.2' identified by "TaL2gPU5U9FcCU2u"; FLUSH PRIVILEGES; SHOW GRANTS;
-
-
 #refresh permissions
 mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'flush privileges;'
 
@@ -82,7 +61,7 @@ mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | 
 systemctl enable mariadb
 
 #add zabbix 3.4 repository
-rpm -ivh http://repo.zabbix.com/zabbix/3.4/rhel/7/x86_64/zabbix-release-3.4-2.el7.noarch.rpm
+rpm -ivh http://repo.zabbix.com/zabbix/3.5/rhel/7/x86_64/zabbix-release-3.5-1.el7.noarch.rpm
 if [ $? -ne 0 ]; then
 echo cannot install zabbix repository
 else
@@ -170,10 +149,12 @@ setsebool -P httpd_can_network_connect on
 setsebool -P zabbix_can_network on
 getsebool -a | grep "httpd_can_network_connect \|zabbix_can_network"
 
-# curl https://support.zabbix.com/secure/attachment/53320/zabbix_server_add.te > zabbix_server_add.te
-# checkmodule -M -m -o zabbix_server_add.mod zabbix_server_add.te
-# semodule_package -m zabbix_server_add.mod -o zabbix_server_add.pp
-# semodule -i zabbix_server_add.pp
+#yum -y install policycoreutils-python
+#cd
+#curl https://support.zabbix.com/secure/attachment/53320/zabbix_server_add.te > zabbix_server_add.te
+#checkmodule -M -m -o zabbix_server_add.mod zabbix_server_add.te
+#semodule_package -m zabbix_server_add.mod -o zabbix_server_add.pp
+#semodule -i zabbix_server_add.pp
 
 #configure zabbix to host on root
 grep "^Alias" /etc/httpd/conf.d/zabbix.conf
@@ -251,8 +232,13 @@ fi #mariadb is not running
 #mysql -h localhost -uroot -p'5sRj4GXspvDKsBXW'
 #mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
 
+grep "comm.*zabbix_server.*zabbix_t" /var/log/audit/audit.log | audit2allow -M comm_zabbix_server_zabbix_t
+semodule -i comm_zabbix_server_zabbix_t.pp
+
+setenforce 1
+
 mkdir -p ~/.ssh
-echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== imported-openssh-key"> ~/.ssh/authorized_keys
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"> ~/.ssh/authorized_keys
 chmod -R 700 ~/.ssh
 
 yum -y install vim nmap
