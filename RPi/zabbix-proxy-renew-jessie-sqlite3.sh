@@ -40,6 +40,8 @@ cd /usr/local/bin && mkdir -p ~/$existing_version/$(pwd) && mv zabbix_sender ~/$
 #make a copy of zabbix_agentd.conf,zabbix_proxy.conf,zabbix_agentd.conf.d,zabbix_proxy.conf.d
 cd /usr/local/etc && mkdir -p ~/$existing_version/$(pwd) && cp -R * ~/$existing_version/$(pwd)
 
+cd /etc/init.d && mkdir -p ~/$existing_version/$(pwd) && cp -R zabbix* ~/$existing_version/$(pwd)
+
 cd /dev/shm/zabbix-*
 time make install
 
@@ -47,6 +49,9 @@ echo
 echo default config file:
 grep -v "^#\|^$" /usr/local/etc/zabbix_proxy.conf
 echo
+
+# cd /etc/init.d
+# rm zabbix-*
 
 #re-read all startup applicaition
 systemctl daemon-reload
