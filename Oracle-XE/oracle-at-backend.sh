@@ -1,7 +1,7 @@
 
 # this instruction shows how to setup oracle XE on CentOS 7.5 and install zabbix server with oracle database at the backend.
 
-yum -y install gcc gcc-c++ make gnutls-devel libxml2-devel unixODBC-devel net-snmp-devel libssh2-devel OpenIPMI-devel libevent-devel libcurl-devel openldap-devel bc net-tools
+yum -y install gcc gcc-c++ make gnutls-devel libxml2-devel unixODBC-devel net-snmp-devel libssh2-devel OpenIPMI-devel libevent-devel libcurl-devel openldap-devel bc net-tools vim
 rpm -i https://repo.zabbix.com/non-supported/rhel/7/x86_64/iksemel-1.4-2.el7.centos.x86_64.rpm
 rpm -i https://repo.zabbix.com/non-supported/rhel/7/x86_64/iksemel-devel-1.4-2.el7.centos.x86_64.rpm
 
@@ -157,6 +157,9 @@ rpm -i oracle-instantclient11.2-jdbc-11.2.0.4.0-1.x86_64.rpm
 rpm -i oracle-instantclient11.2-odbc-11.2.0.4.0-1.x86_64.rpm
 rpm -i oracle-instantclient11.2-tools-11.2.0.4.0-1.x86_64.rpm
 
+# zabbix_server: error while loading shared libraries: libclntsh.so.11.1: cannot open shared object file: No such file or directory
+su - zabbix
+echo "export LD_LIBRARY_PATH=\$ORACLE_HOME/lib">> ~/.bash_profile
 
 
 # https://ucblog.ru/2018/04/zabbix-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85-oracle/
