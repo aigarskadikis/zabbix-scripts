@@ -161,6 +161,18 @@ rpm -i oracle-instantclient11.2-tools-11.2.0.4.0-1.x86_64.rpm
 su - zabbix
 echo "export LD_LIBRARY_PATH=\$ORACLE_HOME/lib">> ~/.bash_profile
 
+cat /u01/app/oracle/product/11.2.0/xe/network/admin/tnsnames.ora
+# grep -v "^$\|#" /etc/zabbix/zabbix_server.conf
+# LogFile=/tmp/zabbix_server.log
+# DBName=XE
+# DBUser=zabbix
+# DBPassword=zabbix
+# DBPort=1521
+# Timeout=4
+# LogSlowQueries=3000
+
+
+
 
 # https://ucblog.ru/2018/04/zabbix-%D0%BC%D0%BE%D0%BD%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%BD%D0%B3-%D0%B1%D0%B0%D0%B7%D1%8B-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85-oracle/
 # https://www.tekstream.com/oracle-error-messages/ora-01034-oracle-not-available/
