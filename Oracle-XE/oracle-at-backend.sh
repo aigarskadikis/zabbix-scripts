@@ -135,12 +135,19 @@ http://download.oracle.com/otn/linux/instantclient/11204/oracle-instantclient11.
 http://download.oracle.com/otn/linux/instantclient/11204/oracle-instantclient11.2-tools-11.2.0.4.0-1.x86_64.rpm
 
 
+cd
+v=4.0.0
+curl -L "http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/$v/zabbix-$v.tar.gz" -o zabbix-$v.tar.gz
+tar -vzxf zabbix-$v.tar.gz -C .
+cd zabbix-$v
+
+
 export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
 export LD_LIBRARY_PATH=$ORACLE_HOME/lib
 groupadd zabbix
 useradd -g zabbix zabbix
 
-./configure --enable-server --enable-agent --with-oracle --with-libcurl --with-libxml2 --with-ssh2 --with-net-snmp --with-openipmi --with-jabber --with-openssl --with-unixodbc
+./configure --enable-server --enable-agent --with-oracle --with-libcurl --with-libxml2 --with-ssh2 --with-net-snmp --with-openipmi --with-jabber --with-openssl --with-unixodbc --sysconfdir=/etc/zabbix --prefix=/usr
 
 cd 
 
