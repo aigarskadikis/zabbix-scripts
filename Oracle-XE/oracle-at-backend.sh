@@ -1,4 +1,4 @@
-# the goal of this instruction is to test oracle database monitoring through linuxODBC driver. Oracle 11.2g express edition is used
+# the goal of this instruction is to test oracle database monitoring through linuxODBC driver. So we will set up proxy with 'Oracle 11.2g express edition' so have something to monitor.
 
 # 2 GB of RAM must be persistent
 
@@ -32,8 +32,10 @@ sysctl kernel.shmall # check again live shmall value
 unzip oracle-xe-11.2.0-1.0.x86_64.rpm.zip && cd ~/Disk1 && rpm -i oracle-xe-11.2.0-1.0.x86_64.rpm && time /etc/init.d/oracle-xe configure
 # Lets set database password '5sRj4GXspvDKsBXW' for SYS and SYSTEM account
 
+# set up bash profile for oracle to automatically load appropriate environment
 su - oracle
-echo $ORACLE_HOME
+echo $ORACLE_HOME # now the value is empty
+# install new bash profile
 echo ". /u01/app/oracle/product/11.2.0/xe/bin/oracle_env.sh"> ~/.bash_profile
 echo "export LD_LIBRARY_PATH=\$ORACLE_HOME/lib">> ~/.bash_profile
 exit
@@ -135,8 +137,9 @@ time make
 make install
 
 grep -v "^$\|#" /etc/zabbix/zabbix_proxy.conf
+# modify the values to look similar to this
 Server=ec2-35-166-97-138.us-west-2.compute.amazonaws.com
-Hostname=oracle-xe
+Hostname=orcl-xe-pxy
 LogFile=/tmp/zabbix_proxy.log
 DBName=XE
 DBUser=zabbix
@@ -146,6 +149,7 @@ Timeout=4
 LogSlowQueries=3000
 
 cp /etc/zabbix/{zabbix_proxy.conf,original.zabbix_proxy.conf}
+# fast confugiration install. overwrite original
 cat >/etc/zabbix/zabbix_proxy.conf<< EOL
 Server=ec2-35-166-97-138.us-west-2.compute.amazonaws.com
 Hostname=orcl-xe-pxy
@@ -172,8 +176,11 @@ echo "export LD_LIBRARY_PATH=\$ORACLE_HOME/lib">> ~/.bash_profile
 export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
 export LD_LIBRARY_PATH=$ORACLE_HOME/lib
 
+# launch the proxy server now in foreground
 zabbix_proxy -f
 
+# open another session and check the logs
+cat /tmp/zabbix_proxy.log
 
 # set up ODBC connection
 cd 
@@ -181,9 +188,7 @@ cd
 rpm -i oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm # required for odbc. this is needed for httpd client to be able to connect. 
 rpm -i oracle-instantclient11.2-odbc-11.2.0.4.0-1.x86_64.rpm # odbc connector. needed to use direct SQL statements
 
-
-find / -name odbc_update_ini.sh
-
+# fix some error mentioned http://docs.adaptivecomputing.com/9-1-0/MWS/Content/topics/moabWorkloadManager/topics/databases/oracle.html
 updatedb && locate libodbcinst
 cd /usr/lib64
 ln -s libodbcinst.so.2 libodbcinst.so.1
@@ -268,6 +273,6 @@ isql -v ODBC
 # |                                       |
 # +---------------------------------------+
 
-# http://docs.adaptivecomputing.com/9-1-0/MWS/Content/topics/moabWorkloadManager/topics/databases/oracle.html
-
-# https://www.zabbix.com/documentation/4.0/manual/appendix/install/db_scripts
+#test some queries
+select count(*) "procnum" from gv$process
+select to_char((sysdate-startup_time)*86400, 'FM99999999999999990') retvalue from gv$instance
