@@ -8,7 +8,7 @@ chmod -R 600 ~/.ssh/authorized_keys
 
 # set hostname to 'oracle-be.lan' which stands for oracle back-end
 nmtui
-
+reboot
 # reboot computer so when you execute '/etc/init.d/oracle-xe configure' the oracle wizard will really take up the right hostname. Without reboot it will not work.
 
 # this file must be placed on /root. Neet to have oracle account to download those files
@@ -16,7 +16,7 @@ nmtui
 # http://download.oracle.com/otn/linux/instantclient/11204/oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm
 # http://download.oracle.com/otn/linux/instantclient/11204/oracle-instantclient11.2-odbc-11.2.0.4.0-1.x86_64.rpm
 
-yum -y install gcc gcc-c++ make gnutls-devel libxml2-devel unixODBC-devel net-snmp-devel libssh2-devel OpenIPMI-devel libevent-devel libcurl-devel openldap-devel bc net-tools vim unzip mlocate
+yum -y install gcc gcc-c++ make gnutls-devel libxml2-devel unixODBC-devel net-snmp-devel libssh2-devel OpenIPMI-devel libevent-devel libcurl-devel bc net-tools vim unzip mlocate
 rpm -i https://repo.zabbix.com/non-supported/rhel/7/x86_64/iksemel-1.4-2.el7.centos.x86_64.rpm
 rpm -i https://repo.zabbix.com/non-supported/rhel/7/x86_64/iksemel-devel-1.4-2.el7.centos.x86_64.rpm
 
