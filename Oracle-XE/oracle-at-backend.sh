@@ -24,7 +24,7 @@ reboot
 yum -y install gcc make net-snmp-devel libssh2-devel libcurl-devel unixODBC-devel bc net-tools vim unzip mlocate
 # bc, net-tools required for oracle setup
 
-# according to 
+# according to https://docs.oracle.com/cd/E11882_01/install.112/e24326/toc.htm#BHCIFHBE some modifications must be adjusted to kernel parameters
 sysctl kernel.shmmax # check shmmax. must be 4294967295
 echo "kernel.shmmax = 4294967295" >> /etc/sysctl.conf # install shmmax=4294967295 globaly at the next boot
 sysctl -w kernel.shmmax=4294967295 # set shmmax=4294967295 now!
