@@ -12,15 +12,17 @@ reboot
 # reboot computer so when you execute '/etc/init.d/oracle-xe configure' the oracle wizard will really take up the right hostname. Without reboot it will not work.
 
 # go to https://www.oracle.com/technetwork/database/database-technologies/express-edition/downloads/index.html
-# oracle-xe-11.2.0-1.0.x86_64.rpm.zip
-# place this file on /root 
+# download:
+# * oracle-xe-11.2.0-1.0.x86_64.rpm.zip
+# and place this file on /root 
 
 # go to https://www.oracle.com/technetwork/topics/linuxx86-64soft-092277.html
-# oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm
-# oracle-instantclient11.2-odbc-11.2.0.4.0-1.x86_64.rpm
-# place these files on /root 
+# download:
+# * oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm
+# * oracle-instantclient11.2-odbc-11.2.0.4.0-1.x86_64.rpm
+# and place these files on /root 
 
-# install prerrequsites for everything
+# install prerequsites for everything
 yum -y install gcc make net-snmp-devel libssh2-devel libcurl-devel unixODBC-devel bc net-tools vim unzip mlocate
 # bc, net-tools required for oracle setup
 
@@ -36,7 +38,7 @@ sysctl -w kernel.shmall=2097152 # set shmall=2097152 now!
 sysctl kernel.shmall # check again live shmall value
 
 unzip oracle-xe-11.2.0-1.0.x86_64.rpm.zip && cd ~/Disk1 && rpm -i oracle-xe-11.2.0-1.0.x86_64.rpm && time /etc/init.d/oracle-xe configure
-# Lets set database password '5sRj4GXspvDKsBXW' for SYS and SYSTEM account
+# Let's set database password '5sRj4GXspvDKsBXW' for SYS and SYSTEM account
 
 # set up bash profile for oracle to automatically load appropriate environment
 su - oracle
@@ -50,7 +52,7 @@ echo $ORACLE_HOME
 echo $LD_LIBRARY_PATH
 tnsping XE # try to ping TNSNAME. to this point it should retreive 'OK' at the last line
 
-# download archive into oracle profile
+# download zabbix source archive into oracle profile
 cd
 v=4.0.0
 curl -L "http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/$v/zabbix-$v.tar.gz" -o zabbix-$v.tar.gz
@@ -58,7 +60,7 @@ tar -vzxf zabbix-$v.tar.gz -C .
 cd ~/zabbix-$v/database/oracle
 cp *.sql ~
 
-### run as oracle user
+# enter database administration with oracle super user 
 sqlplus sys as sysdba
 # '5sRj4GXspvDKsBXW'
 
@@ -74,7 +76,7 @@ select parameter,value from v$nls_parameters where parameter='NLS_CHARACTERSET' 
 # NLS_NCHAR_CHARACTERSET
 # UTF8
 
-# if not then execute this commands
+# if not then execute these commands:
 
 shutdown immediate
 startup mount
@@ -99,7 +101,7 @@ CREATE USER zabbix IDENTIFIED BY zabbix DEFAULT TABLESPACE ZABBIX_TS;
 GRANT DBA TO zabbix WITH ADMIN OPTION;
 exit
 
-# connect to database zabbix
+# connect to database zabbix. this is a way how to authorize into database with one-liner
 sqlplus zabbix/zabbix
 
 # last check if the encoding is right
@@ -128,8 +130,11 @@ curl -L "http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stabl
 tar -vzxf zabbix-$v.tar.gz -C .
 cd zabbix-$v
 
+# temporary set some directions where the oracle libraries is located
 export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
 export LD_LIBRARY_PATH=$ORACLE_HOME/lib
+
+# create user 'zabbix' and assign it to group 'zabbix'
 groupadd zabbix
 useradd -g zabbix zabbix
 
@@ -154,8 +159,9 @@ DBPort=1521
 Timeout=4
 LogSlowQueries=3000
 
+# OR you can overwrite the conf:
 cp /etc/zabbix/{zabbix_proxy.conf,original.zabbix_proxy.conf}
-# fast confugiration install. overwrite original
+# fast configuration install. overwrite original
 cat >/etc/zabbix/zabbix_proxy.conf<< EOL
 Server=ec2-35-166-97-138.us-west-2.compute.amazonaws.com
 Hostname=orcl-xe-pxy
@@ -168,17 +174,17 @@ Timeout=4
 LogSlowQueries=3000
 EOL
 
-
 # test if proxy is working
 su - zabbix
 # zabbix_proxy: error while loading shared libraries: libclntsh.so.11.1: cannot open shared object file: No such file or directory
 cat /u01/app/oracle/product/11.2.0/xe/network/admin/tnsnames.ora
 cat ~/.bash_profile
 
-# allow to communicate with oracle engine from zabbix user
+# allow to communicate with oracle engine from zabbix user in next bash session
 echo ". /u01/app/oracle/product/11.2.0/xe/bin/oracle_env.sh">> ~/.bash_profile
 echo "export LD_LIBRARY_PATH=\$ORACLE_HOME/lib">> ~/.bash_profile
 
+# allow to communicate with oracle engine right now!
 export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
 export LD_LIBRARY_PATH=$ORACLE_HOME/lib
 
@@ -191,7 +197,7 @@ cat /tmp/zabbix_proxy.log
 # set up ODBC connection
 cd 
 
-rpm -i oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm # required for odbc. this is needed for httpd client to be able to connect. 
+rpm -i oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm # required for odbc 
 rpm -i oracle-instantclient11.2-odbc-11.2.0.4.0-1.x86_64.rpm # odbc connector. needed to use direct SQL statements
 
 # fix some error mentioned http://docs.adaptivecomputing.com/9-1-0/MWS/Content/topics/moabWorkloadManager/topics/databases/oracle.html
@@ -207,7 +213,7 @@ isql
 # backup original file which contains samples for MySQL and PostgreSQL
 cp /etc/{odbcinst.ini,original.odbcinst.ini}
 
-# install new connection driver definition regarding to oracle
+# install/overwrite new connection driver definition regarding to oracle 11.2 xe
 cat >/etc/odbcinst.ini<< EOL
 [Oracle 11g ODBC driver]
 Description     = Oracle ODBC driver for Oracle 11g
@@ -226,7 +232,7 @@ Pooling = No
 DEBUG = 1
 EOL
 
-# install connection details. this is the place where hostname matters!
+# install connection details. note the the line with "DNS = XE". This is another place where hostname oracle-be.lan matters!
 cat >/etc/odbc.ini<< EOL
 [ODBC]
 Application Attributes = T
@@ -282,3 +288,5 @@ isql -v ODBC
 #test some queries
 select count(*) "procnum" from gv$process
 select to_char((sysdate-startup_time)*86400, 'FM99999999999999990') retvalue from gv$instance
+
+# attach the template inside zabbix
