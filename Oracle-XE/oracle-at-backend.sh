@@ -11,14 +11,20 @@ nmtui
 reboot
 # reboot computer so when you execute '/etc/init.d/oracle-xe configure' the oracle wizard will really take up the right hostname. Without reboot it will not work.
 
-# this file must be placed on /root. Neet to have oracle account to download those files
-# http://download.oracle.com/otn/linux/oracle11g/xe/oracle-xe-11.2.0-1.0.x86_64.rpm.zip
-# http://download.oracle.com/otn/linux/instantclient/11204/oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm
-# http://download.oracle.com/otn/linux/instantclient/11204/oracle-instantclient11.2-odbc-11.2.0.4.0-1.x86_64.rpm
+# go to https://www.oracle.com/technetwork/database/database-technologies/express-edition/downloads/index.html
+# oracle-xe-11.2.0-1.0.x86_64.rpm.zip
+# place this file on /root 
 
+# go to https://www.oracle.com/technetwork/topics/linuxx86-64soft-092277.html
+# oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm
+# oracle-instantclient11.2-odbc-11.2.0.4.0-1.x86_64.rpm
+# place these files on /root 
+
+# install prerrequsites for everything
 yum -y install gcc make net-snmp-devel libssh2-devel libcurl-devel unixODBC-devel bc net-tools vim unzip mlocate
 # bc, net-tools required for oracle setup
 
+# according to 
 sysctl kernel.shmmax # check shmmax. must be 4294967295
 echo "kernel.shmmax = 4294967295" >> /etc/sysctl.conf # install shmmax=4294967295 globaly at the next boot
 sysctl -w kernel.shmmax=4294967295 # set shmmax=4294967295 now!
