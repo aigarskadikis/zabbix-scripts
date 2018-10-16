@@ -16,9 +16,8 @@ reboot
 # http://download.oracle.com/otn/linux/instantclient/11204/oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm
 # http://download.oracle.com/otn/linux/instantclient/11204/oracle-instantclient11.2-odbc-11.2.0.4.0-1.x86_64.rpm
 
-yum -y install gcc gcc-c++ make gnutls-devel libxml2-devel unixODBC-devel net-snmp-devel libssh2-devel OpenIPMI-devel libevent-devel libcurl-devel bc net-tools vim unzip mlocate
-rpm -i https://repo.zabbix.com/non-supported/rhel/7/x86_64/iksemel-1.4-2.el7.centos.x86_64.rpm
-rpm -i https://repo.zabbix.com/non-supported/rhel/7/x86_64/iksemel-devel-1.4-2.el7.centos.x86_64.rpm
+yum -y install gcc make net-snmp-devel libssh2-devel libcurl-devel unixODBC-devel bc net-tools vim unzip mlocate
+# bc, net-tools required for oracle setup
 
 sysctl kernel.shmmax # check shmmax. must be 4294967295
 echo "kernel.shmmax = 4294967295" >> /etc/sysctl.conf # install shmmax=4294967295 globaly at the next boot
@@ -127,7 +126,7 @@ groupadd zabbix
 useradd -g zabbix zabbix
 
 # configure proxy
-./configure --enable-proxy --enable-agent --with-oracle --with-libcurl --with-libxml2 --with-ssh2 --with-net-snmp --with-openipmi --with-jabber --with-openssl --with-unixodbc --sysconfdir=/etc/zabbix --prefix=/usr
+./configure --enable-proxy --enable-agent --with-oracle --with-unixodbc --with-net-snmp --with-ssh2 --with-openssl --with-libcurl --sysconfdir=/etc/zabbix --prefix=/usr
 
 # compile
 time make 
