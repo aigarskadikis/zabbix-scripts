@@ -6,7 +6,7 @@
 echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== imported-openssh-key" > ~/.ssh/authorized_keys
 chmod -R 600 ~/.ssh/authorized_keys
 
-# set hostname to 'oracle-be.pro' which stands for oracle back-end
+# set hostname to 'oracle-be.lan' which stands for oracle back-end
 nmtui
 
 # reboot computer so when you execute '/etc/init.d/oracle-xe configure' the oracle wizard will really take up the right hostname. Without reboot it will not work.
@@ -149,7 +149,7 @@ LogSlowQueries=3000
 cp /etc/zabbix/{zabbix_proxy.conf,original.zabbix_proxy.conf}
 cat >/etc/zabbix/zabbix_proxy.conf<< EOL
 Server=ec2-35-166-97-138.us-west-2.compute.amazonaws.com
-Hostname=oracle-xe
+Hostname=orcl-xe-pxy
 LogFile=/tmp/zabbix_proxy.log
 DBName=XE
 DBUser=zabbix
@@ -241,7 +241,7 @@ MaxLargeData = 0
 MetadataIdDefault = F
 QueryTimeout = T
 ResultSets = T
-ServerName = oracle-be.pro
+ServerName = oracle-be.lan
 SQLGetData extensions = F
 Translation DLL =
 Translation Option = 0
