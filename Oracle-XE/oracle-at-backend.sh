@@ -23,7 +23,7 @@ reboot
 # and place these files on /root 
 
 # install prerequsites for everything
-yum -y install gcc make net-snmp-devel libssh2-devel libcurl-devel unixODBC-devel bc net-tools vim unzip mlocate
+yum -y install gcc make net-snmp-devel libssh2-devel libcurl-devel unixODBC-devel bc net-tools vim unzip mlocate policycoreutils-python
 # bc, net-tools are required for oracle setup
 
 # according to https://docs.oracle.com/cd/E11882_01/install.112/e24326/toc.htm#BHCIFHBE some modifications must be adjusted to kernel parameters
@@ -338,14 +338,11 @@ export ORACLE_SID
 export PATH
 EOL
 
-#usermod -G dba zabbix 
-#usermod -G zabbix zabbix #to set zabbix only in group 'zabbix'
 systemctl daemon-reload
 setenforce 0
 systemctl stop zabbix-proxy
 
 systemctl start zabbix-proxy
-yum -y install policycoreutils-python
 # show 'grep's which components are involved, not allowed
 grep denied /var/log/audit/audit.log | sed "s/^.*denied /denied/g;s/ pid=[0-9]\+ \| ino=[0-9]\+//g;s/ name=.*scontext=\| path=.*scontext=/ /g" | sort | uniq | sed "s/^.*comm=.//g;s/. .*system_r:/.*/g;s/:.*//g" | sort|uniq | sed "s/^/grep \"comm.*/g;s/$/\" \/var\/log\/audit\/audit.log/g"
 
