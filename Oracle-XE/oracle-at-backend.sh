@@ -139,7 +139,8 @@ groupadd zabbix
 useradd -g zabbix zabbix
 
 # configure proxy
-./configure --enable-proxy --enable-agent --with-oracle --with-unixodbc --with-net-snmp --with-ssh2 --with-openssl --with-libcurl --sysconfdir=/etc/zabbix --prefix=/usr
+./configure --enable-proxy --enable-agent --with-oracle --with-unixodbc --with-net-snmp --with-ssh2 --with-openssl --with-libcurl --with-oracle-include=/usr/include/oracle/11.2/client64 --with-oracle-lib=/usr/lib/oracle/11.2/client64/lib --sysconfdir=/etc/zabbix --prefix=/usr
+
 
 # compile
 time make 
@@ -289,4 +290,45 @@ isql -v ODBC
 select count(*) "procnum" from gv$process
 select to_char((sysdate-startup_time)*86400, 'FM99999999999999990') retvalue from gv$instance
 
+# exit isql utility
+quit
+
+# install init file. the difference between this and original is 'PIDFile=/tmp/zabbix_proxy.pid'
+cat >/usr/lib/systemd/system/zabbix-proxy.service<< EOL
+[Unit]
+Description=Zabbix Proxy
+After=syslog.target
+After=network.target
+
+[Service]
+Environment="CONFFILE=/etc/zabbix/zabbix_proxy.conf"
+EnvironmentFile=-/etc/sysconfig/zabbix-proxy
+Type=forking
+Restart=on-failure
+PIDFile=/tmp/zabbix_proxy.pid
+KillMode=control-group
+ExecStart=/usr/sbin/zabbix_proxy -c $CONFFILE
+ExecStop=/bin/kill -SIGTERM $MAINPID
+RestartSec=10s
+TimeoutSec=0
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# install environment file
+cat >/etc/sysconfig/zabbix-proxy<< EOL
+ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
+LD_LIBRARY_PATH=/usr/lib/oracle/11.2/client64/lib:/usr/lib64
+ORACLE_SID=XE
+PATH=/u01/app/oracle/product/11.2.0/xe/bin:/bin:/usr/bin:/usr/sbin
+
+export ORACLE_HOME
+export LD_LIBRARY_PATH
+export ORACLE_SID
+export PATH
+EOL
+
+
+systemctl daemon-reload
 # attach the template inside zabbix
