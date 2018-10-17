@@ -139,8 +139,7 @@ groupadd zabbix
 useradd -g zabbix zabbix
 
 # configure proxy
-./configure --enable-proxy --enable-agent --with-oracle --with-unixodbc --with-net-snmp --with-ssh2 --with-openssl --with-libcurl --with-oracle-include=/usr/include/oracle/11.2/client64 --with-oracle-lib=/usr/lib/oracle/11.2/client64/lib --sysconfdir=/etc/zabbix --prefix=/usr
-
+./configure --enable-proxy --enable-agent --with-oracle --with-unixodbc --with-net-snmp --with-ssh2 --with-openssl --with-libcurl --sysconfdir=/etc/zabbix --prefix=/usr
 
 # compile
 time make 
@@ -192,8 +191,12 @@ export LD_LIBRARY_PATH=$ORACLE_HOME/lib
 # launch the proxy server now in foreground
 zabbix_proxy -f
 
-# open another session and check the logs
+# Ctrl+C and exit zabbix user
+exit
+
+# open another session and check the logs or hit Ctrl+C in this session
 cat /tmp/zabbix_proxy.log
+
 
 # set up ODBC connection
 cd 
@@ -295,7 +298,11 @@ quit
 
 # attach the template inside zabbix
 
+# exit zabbix user
+exit
+
 # install init file. the difference between this and original is 'PIDFile=/tmp/zabbix_proxy.pid'
+# be careful when modify this script. dolar signs must be escaped.
 cat >/usr/lib/systemd/system/zabbix-proxy.service<< EOL
 [Unit]
 Description=Zabbix Proxy
@@ -309,8 +316,8 @@ Type=forking
 Restart=on-failure
 PIDFile=/tmp/zabbix_proxy.pid
 KillMode=control-group
-ExecStart=/usr/sbin/zabbix_proxy -c $CONFFILE
-ExecStop=/bin/kill -SIGTERM $MAINPID
+ExecStart=/usr/sbin/zabbix_proxy -c \$CONFFILE
+ExecStop=/bin/kill -SIGTERM \$MAINPID
 RestartSec=10s
 TimeoutSec=0
 
@@ -329,13 +336,13 @@ export ORACLE_HOME
 export LD_LIBRARY_PATH
 export ORACLE_SID
 export PATH
-
 EOL
 
-usermod zabbix -G dba
-
+#usermod -G dba zabbix 
+#usermod -G zabbix zabbix #to set zabbix only in group 'zabbix'
 systemctl daemon-reload
 setenforce 0
+systemctl stop zabbix-proxy
 
 systemctl start zabbix-proxy
 yum -y install policycoreutils-python
@@ -350,3 +357,4 @@ systemctl stop zabbix-proxy
 setenforce 1
 systemctl start zabbix-proxy
 systemctl status zabbix-proxy
+systemctl enable zabbix-proxy
