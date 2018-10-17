@@ -293,6 +293,8 @@ select to_char((sysdate-startup_time)*86400, 'FM99999999999999990') retvalue fro
 # exit isql utility
 quit
 
+# attach the template inside zabbix
+
 # install init file. the difference between this and original is 'PIDFile=/tmp/zabbix_proxy.pid'
 cat >/usr/lib/systemd/system/zabbix-proxy.service<< EOL
 [Unit]
@@ -319,16 +321,32 @@ EOL
 # install environment file
 cat >/etc/sysconfig/zabbix-proxy<< EOL
 ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
-LD_LIBRARY_PATH=/usr/lib/oracle/11.2/client64/lib:/usr/lib64
+LD_LIBRARY_PATH=/usr/lib64:/u01/app/oracle/product/11.2.0/xe/lib
 ORACLE_SID=XE
-PATH=/u01/app/oracle/product/11.2.0/xe/bin:/bin:/usr/bin:/usr/sbin
+PATH=/bin:/usr/bin:/usr/sbin:/u01/app/oracle/product/11.2.0/xe/bin
 
 export ORACLE_HOME
 export LD_LIBRARY_PATH
 export ORACLE_SID
 export PATH
+
 EOL
 
+usermod zabbix -G dba
 
 systemctl daemon-reload
-# attach the template inside zabbix
+setenforce 0
+
+systemctl start zabbix-proxy
+yum -y install policycoreutils-python
+# show 'grep's which components are involved, not allowed
+grep denied /var/log/audit/audit.log | sed "s/^.*denied /denied/g;s/ pid=[0-9]\+ \| ino=[0-9]\+//g;s/ name=.*scontext=\| path=.*scontext=/ /g" | sort | uniq | sed "s/^.*comm=.//g;s/. .*system_r:/.*/g;s/:.*//g" | sort|uniq | sed "s/^/grep \"comm.*/g;s/$/\" \/var\/log\/audit\/audit.log/g"
+
+# install missing 
+grep "comm.*zabbix_proxy.*zabbix_t" /var/log/audit/audit.log | audit2allow -M comm_zabbix_proxy_zabbix_t
+semodule -i comm_zabbix_proxy_zabbix_t.pp
+
+systemctl stop zabbix-proxy
+setenforce 1
+systemctl start zabbix-proxy
+systemctl status zabbix-proxy
