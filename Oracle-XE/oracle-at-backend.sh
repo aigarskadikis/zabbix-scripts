@@ -141,6 +141,9 @@ useradd -g zabbix zabbix
 # configure proxy
 ./configure --enable-proxy --enable-agent --with-oracle --with-unixodbc --with-net-snmp --with-ssh2 --with-openssl --with-libcurl --sysconfdir=/etc/zabbix --prefix=/usr
 
+# maybe it is ok te manage the agent binary from repository
+#./configure --enable-proxy --with-oracle --with-unixodbc --with-net-snmp --with-ssh2 --with-openssl --with-libcurl --sysconfdir=/etc/zabbix --prefix=/usr
+
 # compile
 time make 
 
@@ -355,3 +358,24 @@ setenforce 1
 systemctl start zabbix-proxy
 systemctl status zabbix-proxy
 systemctl enable zabbix-proxy
+
+# Problem:
+# This system does not meet the minimum requirements for swap space.  Based on
+# the amount of physical memory available on the system, Oracle Database 11g
+# Express Edition requires 2048 MB of swap space. This system has 0 MB
+# of swap space.  Configure more swap space on the system and retry the
+# installation.
+#
+# Solution:
+# dd if=/dev/zero of=/myswap bs=1M count=2048 && chmod 0600 /myswap && mkswap /myswap && swapon /myswap
+
+# Problem:
+# [01000][unixODBC][Driver Manager]Can't open lib '/usr/lib/oracle/11.2/client64/lib/libsqora.so.11.1' : file not found
+# [ISQL]ERROR: Could not SQLConnect
+# Solution:
+# echo ". /u01/app/oracle/product/11.2.0/xe/bin/oracle_env.sh">> ~/.bash_profile
+# echo "export LD_LIBRARY_PATH=\$ORACLE_HOME/lib">> ~/.bash_profile
+ 
+
+
+# ORA-12154: TNS:could not resolve the connect identifier specified
