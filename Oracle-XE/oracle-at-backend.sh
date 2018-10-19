@@ -181,6 +181,9 @@ EOL
 su - zabbix
 # zabbix_proxy: error while loading shared libraries: libclntsh.so.11.1: cannot open shared object file: No such file or directory
 cat /u01/app/oracle/product/11.2.0/xe/network/admin/tnsnames.ora
+cp /u01/app/oracle/product/11.2.0/xe/network/admin/{original.tnsnames.ora,tnsnames.ora}
+sed -i "s|$(hostname)|127.0.0.1|g" /u01/app/oracle/product/11.2.0/xe/network/admin/tnsnames.ora
+
 cat ~/.bash_profile
 
 # allow to communicate with oracle engine from zabbix user in next bash session
@@ -264,7 +267,7 @@ MaxLargeData = 0
 MetadataIdDefault = F
 QueryTimeout = T
 ResultSets = T
-ServerName = oracle-be.lan
+ServerName = 127.0.0.1
 SQLGetData extensions = F
 Translation DLL =
 Translation Option = 0
