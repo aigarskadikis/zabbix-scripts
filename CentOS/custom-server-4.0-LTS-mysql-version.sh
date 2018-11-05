@@ -60,7 +60,7 @@ mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | 
 #enable to start MySQL automatically at next boot
 systemctl enable mariadb
 
-#add zabbix 3.4 repository
+#add zabbix 4.0 repository
 rpm -ivh http://repo.zabbix.com/zabbix/4.0/rhel/7/x86_64/zabbix-release-4.0-1.el7.noarch.rpm
 if [ $? -ne 0 ]; then
 echo cannot install zabbix repository
