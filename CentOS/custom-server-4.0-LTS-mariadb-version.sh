@@ -20,7 +20,7 @@ firewall-cmd --reload
 yum update -y
 
 #install SELinux debuging utils
-yum install policycoreutils-python bzip2 -y
+yum install policycoreutils-python bzip2 vim -y
 
 echo "IyBNYXJpYURCIDEwLjIgQ2VudE9TIHJlcG9zaXRvcnkgbGlzdCAtIGNyZWF0ZWQgMjAxOC0wOC0xMyAwNjozOSBVVEMKIyBodHRwOi8vZG93bmxvYWRzLm1hcmlhZGIub3JnL21hcmlhZGIvcmVwb3NpdG9yaWVzLwpbbWFyaWFkYl0KbmFtZSA9IE1hcmlhREIKYmFzZXVybCA9IGh0dHA6Ly95dW0ubWFyaWFkYi5vcmcvMTAuMi9jZW50b3M3LWFtZDY0CmdwZ2tleT1odHRwczovL3l1bS5tYXJpYWRiLm9yZy9SUE0tR1BHLUtFWS1NYXJpYURCCmdwZ2NoZWNrPTEK" | base64 --decode > /etc/yum.repos.d/MariaDB.repo
 cat /etc/yum.repos.d/MariaDB.repo
@@ -43,24 +43,24 @@ echo cannot set root password for mariadb
 else
 
 #show existing databases
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | grep zabbix
+mysql <<< 'show databases;' | grep zabbix
 if [ $? -eq 0 ]; then
 echo zabbix database already exist. cannot continue
 else
 #create zabbix database
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'create database zabbix character set utf8 collate utf8_bin;'
+mysql <<< 'create database zabbix character set utf8 collate utf8_bin;'
 
 #create user zabbix and allow user to connect to the database with only from localhost
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
+mysql <<< 'grant all privileges on zabbix.* to "zabbix"@"localhost" identified by "zabbix";'
 
 #create user for partitioning
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix_part@localhost identified by "dwyQv5X3G6WwtYKg";'
+mysql <<< 'grant all privileges on zabbix.* to "zabbix_part"@"localhost" identified by "dwyQv5X3G6WwtYKg";'
 
 #refresh permissions
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'flush privileges;'
+mysql <<< 'flush privileges;'
 
 #show existing databases
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | grep zabbix
+mysql <<< 'show databases;' | grep zabbix
 
 #enable to start MySQL automatically at next boot
 systemctl enable mariadb
@@ -72,14 +72,14 @@ echo cannot install zabbix repository
 else
 
 #install zabbix server which are supposed to use MySQL as a database
-yum install zabbix-server-mysql-$1 -y
+yum -y install zabbix-server-mysql-$1
 if [ $? -ne 0 ]; then
 echo zabbix-server-mysql package not found
 else
 
 #create zabbix database structure
 ls -l /usr/share/doc/zabbix-server-mysql*/
-zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -pTaL2gPU5U9FcCU2u zabbix
+zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -pzabbix zabbix
 if [ $? -ne 0 ]; then
 echo cannot insert zabbix sql shema into database
 else
@@ -114,10 +114,10 @@ server=/etc/zabbix/zabbix_server.conf
 
 grep "^DBPassword=" $server
 if [ $? -eq 0 ]; then
-sed -i "s/^DBPassword=.*/DBPassword=TaL2gPU5U9FcCU2u/" $server #modifies already customized setting
+sed -i "s/^DBPassword=.*/DBPassword=zabbix/" $server #modifies already customized setting
 else
 ln=$(grep -n "DBPassword=" $server | egrep -o "^[0-9]+"); ln=$((ln+1)) #calculate the the line number after default setting
-sed -i "`echo $ln`iDBPassword=TaL2gPU5U9FcCU2u" $server #adds new line
+sed -i "`echo $ln`iDBPassword=zabbix" $server #adds new line
 fi
 
 grep "^CacheUpdateFrequency=" $server
@@ -194,7 +194,7 @@ global \$DB;
 \$DB['PORT']     = '0';
 \$DB['DATABASE'] = 'zabbix';
 \$DB['USER']     = 'zabbix';
-\$DB['PASSWORD'] = 'TaL2gPU5U9FcCU2u';
+\$DB['PASSWORD'] = 'zabbix';
 
 // Schema name. Used for IBM DB2 and PostgreSQL.
 \$DB['SCHEMA'] = '';
