@@ -35,6 +35,38 @@ if [ $? -ne 0 ]; then
 echo cannot start mariadb
 else
 
+
+
+systemctl stop mariadb
+sleep 1
+
+# this will insert new values after [mysqld] section:
+# innodb_buffer_pool_size = 128M
+# innodb_buffer_pool_instances = 4
+# innodb_flush_log_at_trx_commit = 0
+# innodb_flush_method = O_DIRECT
+# innodb_log_file_size = 256M
+# query_cache_type = 0
+# max_connections = 1000
+
+ln=$(grep -n "^\[mysqld\]" /etc/my.cnf.d/server.cnf | egrep -o "^[0-9]+"); ln=$((ln+1))
+echo $ln
+sed -i "`echo $ln`imax_connections = 1000" /etc/my.cnf.d/server.cnf
+sed -i "`echo $ln`iquery_cache_type = 0" /etc/my.cnf.d/server.cnf
+sed -i "`echo $ln`iinnodb_log_file_size = 256M" /etc/my.cnf.d/server.cnf
+sed -i "`echo $ln`iinnodb_flush_method = O_DIRECT" /etc/my.cnf.d/server.cnf
+sed -i "`echo $ln`iinnodb_flush_log_at_trx_commit = 0" /etc/my.cnf.d/server.cnf
+sed -i "`echo $ln`iinnodb_buffer_pool_instances = 4" /etc/my.cnf.d/server.cnf
+sed -i "`echo $ln`iinnodb_buffer_pool_size = 128M" /etc/my.cnf.d/server.cnf
+
+rm -rf /var/lib/mysql/ib_logfile*
+
+
+systemctl start mariadb
+if [ $? -ne 0 ]; then
+echo cannot start mariadb after tuning the performance
+else
+
 #show existing databases
 mysql <<< 'show databases;' | grep zabbix
 if [ $? -eq 0 ]; then
@@ -224,6 +256,7 @@ fi #cannot insert zabbix sql shema into database
 fi #zabbix-server-mysql package not found
 fi #cannot install zabbix repository
 fi #zabbix database already exist
+fi #cannot tune mariadb performance
 fi #mariadb is not running
 
 #mysql -h localhost -uroot -p'5sRj4GXspvDKsBXW'
