@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #this is tested and works together with fresh CentOS-7-x86_64-Minimal-1708.iso
-#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-LTS-mysql-version.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.0   
+#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-LTS-mariadb-version.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.1
 
 #open 80 and 443 into firewall
 systemctl enable firewalld
@@ -11,7 +11,6 @@ firewall-cmd --permanent --add-service=http
 firewall-cmd --permanent --add-service=https
 firewall-cmd --permanent --add-service=mysql
 firewall-cmd --add-port=162/udp --permanent
-firewall-cmd --add-port=3000/tcp --permanent #for grafana reporting server https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-grafana-to-plot-beautiful-graphs-from-zabbix-on-centos-7
 firewall-cmd --add-port=10050/tcp --permanent
 firewall-cmd --add-port=10051/tcp --permanent
 firewall-cmd --reload
@@ -20,7 +19,7 @@ firewall-cmd --reload
 yum update -y
 
 #install SELinux debuging utils
-yum install policycoreutils-python bzip2 vim -y
+yum install policycoreutils-python bzip2 vim nmap -y
 
 echo "IyBNYXJpYURCIDEwLjIgQ2VudE9TIHJlcG9zaXRvcnkgbGlzdCAtIGNyZWF0ZWQgMjAxOC0wOC0xMyAwNjozOSBVVEMKIyBodHRwOi8vZG93bmxvYWRzLm1hcmlhZGIub3JnL21hcmlhZGIvcmVwb3NpdG9yaWVzLwpbbWFyaWFkYl0KbmFtZSA9IE1hcmlhREIKYmFzZXVybCA9IGh0dHA6Ly95dW0ubWFyaWFkYi5vcmcvMTAuMi9jZW50b3M3LWFtZDY0CmdwZ2tleT1odHRwczovL3l1bS5tYXJpYWRiLm9yZy9SUE0tR1BHLUtFWS1NYXJpYURCCmdwZ2NoZWNrPTEK" | base64 --decode > /etc/yum.repos.d/MariaDB.repo
 cat /etc/yum.repos.d/MariaDB.repo
@@ -36,12 +35,6 @@ if [ $? -ne 0 ]; then
 echo cannot start mariadb
 else
 
-#set new root password
-/usr/bin/mysqladmin -u root password '5sRj4GXspvDKsBXW'
-if [ $? -ne 0 ]; then
-echo cannot set root password for mariadb
-else
-
 #show existing databases
 mysql <<< 'show databases;' | grep zabbix
 if [ $? -eq 0 ]; then
@@ -54,7 +47,7 @@ mysql <<< 'create database zabbix character set utf8 collate utf8_bin;'
 mysql <<< 'grant all privileges on zabbix.* to "zabbix"@"localhost" identified by "zabbix";'
 
 #create user for partitioning
-mysql <<< 'grant all privileges on zabbix.* to "zabbix_part"@"localhost" identified by "dwyQv5X3G6WwtYKg";'
+mysql <<< 'grant all privileges on zabbix.* to "zabbix_part"@"localhost" identified by "zabbix";'
 
 #refresh permissions
 mysql <<< 'flush privileges;'
@@ -231,7 +224,6 @@ fi #cannot insert zabbix sql shema into database
 fi #zabbix-server-mysql package not found
 fi #cannot install zabbix repository
 fi #zabbix database already exist
-fi #cannot set root password for mariadb
 fi #mariadb is not running
 
 #mysql -h localhost -uroot -p'5sRj4GXspvDKsBXW'
@@ -245,8 +237,6 @@ setenforce 1
 mkdir -p ~/.ssh
 echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"> ~/.ssh/authorized_keys
 chmod -R 700 ~/.ssh
-
-yum -y install vim nmap
 
 #decrease grup screen to 0 seconds
 sed -i "s/^GRUB_TIMEOUT=.$/GRUB_TIMEOUT=0/" /etc/default/grub
