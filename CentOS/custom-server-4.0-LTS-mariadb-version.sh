@@ -179,13 +179,6 @@ setsebool -P httpd_can_network_connect on
 setsebool -P zabbix_can_network on
 getsebool -a | grep "httpd_can_network_connect \|zabbix_can_network"
 
-#yum -y install policycoreutils-python
-#cd
-#curl https://support.zabbix.com/secure/attachment/53320/zabbix_server_add.te > zabbix_server_add.te
-#checkmodule -M -m -o zabbix_server_add.mod zabbix_server_add.te
-#semodule_package -m zabbix_server_add.mod -o zabbix_server_add.pp
-#semodule -i zabbix_server_add.pp
-
 #configure zabbix to host on root
 grep "^Alias" /etc/httpd/conf.d/zabbix.conf
 if [ $? -ne 0 ]; then
@@ -270,6 +263,13 @@ setenforce 1
 mkdir -p ~/.ssh
 echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"> ~/.ssh/authorized_keys
 chmod -R 700 ~/.ssh
+
+# install prerequsites for partitioning script
+yum -y install epel-release && yum makecache
+yum -y install python-yaml mysql-connector-python
+
+# or
+# curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" && python get-pip.py && pip install mysql-connector-python-rf pyyaml
 
 #decrease grup screen to 0 seconds
 sed -i "s/^GRUB_TIMEOUT=.$/GRUB_TIMEOUT=0/" /etc/default/grub

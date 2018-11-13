@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #this is tested and works together with fresh CentOS-7-x86_64-Minimal-1708.iso
-#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-LTS-mysql-version.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.0   
+#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-LTS-mysql-version.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.1
 
 #open 80 and 443 into firewall
 systemctl enable firewalld
@@ -154,12 +154,6 @@ setsebool -P httpd_can_network_connect on
 setsebool -P zabbix_can_network on
 getsebool -a | grep "httpd_can_network_connect \|zabbix_can_network"
 
-#yum -y install policycoreutils-python
-#cd
-#curl https://support.zabbix.com/secure/attachment/53320/zabbix_server_add.te > zabbix_server_add.te
-#checkmodule -M -m -o zabbix_server_add.mod zabbix_server_add.te
-#semodule_package -m zabbix_server_add.mod -o zabbix_server_add.pp
-#semodule -i zabbix_server_add.pp
 
 #configure zabbix to host on root
 grep "^Alias" /etc/httpd/conf.d/zabbix.conf
