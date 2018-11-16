@@ -78,6 +78,9 @@ mysql <<< 'create database zabbix character set utf8 collate utf8_bin;'
 #create user zabbix and allow user to connect to the database with only from localhost
 mysql <<< 'grant all privileges on zabbix.* to "zabbix"@"localhost" identified by "zabbix";'
 
+# restore from backup
+
+
 #create user for partitioning
 mysql <<< 'grant all privileges on zabbix.* to "zabbix_part"@"localhost" identified by "zabbix";'
 
