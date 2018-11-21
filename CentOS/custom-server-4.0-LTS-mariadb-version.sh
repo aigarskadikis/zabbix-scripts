@@ -79,7 +79,7 @@ mysql <<< 'create database zabbix character set utf8 collate utf8_bin;'
 mysql <<< 'grant all privileges on zabbix.* to "zabbix"@"localhost" identified by "zabbix";'
 
 # restore from backup
-
+# mysql <<< 'drop database zabbix;create database zabbix character set utf8 collate utf8_bin;grant all privileges on zabbix.* to "zabbix"@"localhost" identified by "zabbix";flush privileges;'
 
 #create user for partitioning
 mysql <<< 'grant all privileges on zabbix.* to "zabbix_part"@"localhost" identified by "zabbix";'
