@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #this is tested and works together with fresh CentOS-7-x86_64-Minimal-1708.iso
-#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-LTS-mysql-version.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.0   
+#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-LTS-mariadb-version.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.1
 
 #open 80 and 443 into firewall
 systemctl enable firewalld
@@ -48,16 +48,17 @@ if [ $? -eq 0 ]; then
 echo zabbix database already exist. cannot continue
 else
 #create zabbix database
+mysql <<< 'drop database zabbix;'
+
 mysql <<< 'create database zabbix character set utf8 collate utf8_bin;'
 
 #create user zabbix and allow user to connect to the database with only from localhost
 mysql <<< 'grant all privileges on zabbix.* to "zabbix"@"localhost" identified by "zabbix";'
 
-#create user for partitioning
-mysql <<< 'grant all privileges on zabbix.* to "zabbix_part"@"localhost" identified by "dwyQv5X3G6WwtYKg";'
-
 #refresh permissions
 mysql <<< 'flush privileges;'
+
+bzcat dbdump.bz2 | mysql zabbix
 
 #show existing databases
 mysql <<< 'show databases;' | grep zabbix
