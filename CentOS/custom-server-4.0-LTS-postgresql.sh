@@ -11,6 +11,8 @@ yum -y install policycoreutils-python bzip2 nmap vim
 
 yum -y install postgresql && yum -y install postgresql-server
 
+# disable SELinux
+sed -i "s/^SELINUX=.*$/SELINUX=disabled/" /etc/selinux/config
 setenforce 0
 
 /usr/bin/postgresql-setup initdb
