@@ -54,14 +54,14 @@ fi
 
 sed -i "s/^.*php_value date.timezone .*$/php_value date.timezone Europe\/Riga/" /etc/httpd/conf.d/zabbix.conf
 
-
-vim /var/lib/pgsql/data/pg_hba.conf
+cp /var/lib/pgsql/data/{pg_hba.conf,pg_hba.conf.original}
+cat <<'EOF'> /var/lib/pgsql/data/pg_hba.conf
 # "local" is for Unix domain socket connections only
 local   all             all                                     md5
 # IPv4 local connections:
 host    all             all             127.0.0.1/32            md5
 # IPv6 local connections:
 host    all             all             ::1/128                 md5
+EOF
 
 systemctl restart zabbix-server zabbix-agent postgresql httpd && systemctl enable zabbix-server zabbix-agent httpd
-
