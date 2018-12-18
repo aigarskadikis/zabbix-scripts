@@ -40,13 +40,18 @@ sysctl kernel.shmall # check again live shmall value
 unzip oracle-xe-11.2.0-1.0.x86_64.rpm.zip && cd ~/Disk1 && rpm -i oracle-xe-11.2.0-1.0.x86_64.rpm && time /etc/init.d/oracle-xe configure
 # Let's set database password '5sRj4GXspvDKsBXW' for SYS and SYSTEM account
 
-# set up bash profile for oracle to automatically load appropriate environment
-su - oracle
-echo $ORACLE_HOME # now the value is empty
-# install new bash profile
-echo ". /u01/app/oracle/product/11.2.0/xe/bin/oracle_env.sh"> ~/.bash_profile
-echo "export LD_LIBRARY_PATH=\$ORACLE_HOME/lib">> ~/.bash_profile
-exit
+# https://help.ubuntu.com/community/Oracle%20Instant%20Client
+# install oracle path globaly
+echo "/u01/app/oracle/product/11.2.0/xe/lib" > /etc/ld.so.conf.d/oracle.conf
+chmod o+r /etc/ld.so.conf.d/oracle.conf
+ldconfig -v
+
+cat <<'EOF'> /etc/profile.d/oracle.sh
+. /u01/app/oracle/product/11.2.0/xe/bin/oracle_env.sh
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib
+EOF
+chmod o+r /etc/profile.d/oracle.sh
+
 su - oracle
 echo $ORACLE_HOME
 echo $LD_LIBRARY_PATH
@@ -130,10 +135,6 @@ curl -L "http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stabl
 tar -vzxf zabbix-$v.tar.gz -C .
 cd zabbix-$v
 
-# temporary set some directions where the oracle libraries is located
-export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
-export LD_LIBRARY_PATH=$ORACLE_HOME/lib
-
 # create user 'zabbix' and assign it to group 'zabbix'
 groupadd zabbix
 useradd -g zabbix zabbix
@@ -192,14 +193,8 @@ sed -i "s|$(hostname)|127.0.0.1|g" /u01/app/oracle/product/11.2.0/xe/network/adm
 cat /u01/app/oracle/product/11.2.0/xe/network/admin/tnsnames.ora
 
 # test if proxy is working
-su - zabbix
+su - zabbix -s /bin/bash
 # zabbix_proxy: error while loading shared libraries: libclntsh.so.11.1: cannot open shared object file: No such file or directory
-
-cat ~/.bash_profile
-
-# allow to communicate with oracle engine from zabbix user in next bash session
-echo ". /u01/app/oracle/product/11.2.0/xe/bin/oracle_env.sh">> ~/.bash_profile
-echo "export LD_LIBRARY_PATH=\$ORACLE_HOME/lib">> ~/.bash_profile
 
 # allow to communicate with oracle engine right now!
 export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
