@@ -387,4 +387,4 @@ systemctl enable zabbix-proxy
  
 # Problem:
 # ORA-12154: TNS:could not resolve the connect identifier specified
-# this may be related to long hostname. use 127.0.0.1 insted
+# this may be related to long hostname. use 127.0.0.1 instead
