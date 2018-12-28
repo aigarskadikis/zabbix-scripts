@@ -253,3 +253,7 @@ yum -y install vim nmap
 sed -i "s/^GRUB_TIMEOUT=.$/GRUB_TIMEOUT=0/" /etc/default/grub
 grub2-mkconfig -o /boot/grub2/grub.cfg
 
+# remove old kerels
+yum install -y yum-utils
+package-cleanup --oldkernels --count=1 -y
+
