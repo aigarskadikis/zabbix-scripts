@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #this is tested and works together with fresh CentOS-7-x86_64-Minimal-1708.iso
-#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-LTS-mysql-version.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.0   
+#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-LTS-mysql-version.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.1
 
 #open 80 and 443 into firewall
 systemctl enable firewalld
@@ -16,19 +16,20 @@ firewall-cmd --add-port=10050/tcp --permanent
 firewall-cmd --add-port=10051/tcp --permanent
 firewall-cmd --reload
 
+# set SELinux in permissive mode
+sed -i "s/^SELINUX=.*$/SELINUX=permissive/" /etc/selinux/config
+setenforce 0
+
 #update system
 yum update -y
 
 #install SELinux debuging utils
-yum install policycoreutils-python bzip2 -y
-
-echo "IyBNYXJpYURCIDEwLjIgQ2VudE9TIHJlcG9zaXRvcnkgbGlzdCAtIGNyZWF0ZWQgMjAxOC0wOC0xMyAwNjozOSBVVEMKIyBodHRwOi8vZG93bmxvYWRzLm1hcmlhZGIub3JnL21hcmlhZGIvcmVwb3NpdG9yaWVzLwpbbWFyaWFkYl0KbmFtZSA9IE1hcmlhREIKYmFzZXVybCA9IGh0dHA6Ly95dW0ubWFyaWFkYi5vcmcvMTAuMi9jZW50b3M3LWFtZDY0CmdwZ2tleT1odHRwczovL3l1bS5tYXJpYWRiLm9yZy9SUE0tR1BHLUtFWS1NYXJpYURCCmdwZ2NoZWNrPTEK" | base64 --decode > /etc/yum.repos.d/MariaDB.repo
-cat /etc/yum.repos.d/MariaDB.repo
+yum install policycoreutils-python bzip2 vim nmap -y
 
 yum makecache
 
 #install mariadb (mysql database engine for CentOS 7)
-yum -y install MariaDB-server MariaDB-client
+yum -y install mariadb-server
 
 #start mariadb service
 systemctl start mariadb
@@ -36,31 +37,28 @@ if [ $? -ne 0 ]; then
 echo cannot start mariadb
 else
 
-#set new root password
-/usr/bin/mysqladmin -u root password '5sRj4GXspvDKsBXW'
-if [ $? -ne 0 ]; then
-echo cannot set root password for mariadb
-else
 
 #show existing databases
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | grep zabbix
+mysql <<< 'show databases;' | grep zabbix
 if [ $? -eq 0 ]; then
 echo zabbix database already exist. cannot continue
 else
+
 #create zabbix database
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'create database zabbix character set utf8 collate utf8_bin;'
+mysql <<< 'drop database zabbix;'
+
+mysql <<< 'create database zabbix character set utf8 collate utf8_bin;'
 
 #create user zabbix and allow user to connect to the database with only from localhost
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix@localhost identified by "TaL2gPU5U9FcCU2u";'
-
-#create user for partitioning
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'grant all privileges on zabbix.* to zabbix_part@localhost identified by "dwyQv5X3G6WwtYKg";'
+mysql <<< 'grant all privileges on zabbix.* to "zabbix"@"localhost" identified by "zabbix";'
 
 #refresh permissions
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'flush privileges;'
+mysql <<< 'flush privileges;'
+
+# bzcat dbdump.bz2 | mysql zabbix
 
 #show existing databases
-mysql -h localhost -uroot -p5sRj4GXspvDKsBXW -P 3306 -s <<< 'show databases;' | grep zabbix
+mysql <<< 'show databases;' | grep zabbix
 
 #enable to start MySQL automatically at next boot
 systemctl enable mariadb
@@ -72,14 +70,14 @@ echo cannot install zabbix repository
 else
 
 #install zabbix server which are supposed to use MySQL as a database
-yum install zabbix-server-mysql-$1 -y
+yum -y install zabbix-server-mysql-$1
 if [ $? -ne 0 ]; then
 echo zabbix-server-mysql package not found
 else
 
 #create zabbix database structure
 ls -l /usr/share/doc/zabbix-server-mysql*/
-zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -pTaL2gPU5U9FcCU2u zabbix
+zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -pzabbix zabbix
 if [ $? -ne 0 ]; then
 echo cannot insert zabbix sql shema into database
 else
@@ -114,10 +112,10 @@ server=/etc/zabbix/zabbix_server.conf
 
 grep "^DBPassword=" $server
 if [ $? -eq 0 ]; then
-sed -i "s/^DBPassword=.*/DBPassword=TaL2gPU5U9FcCU2u/" $server #modifies already customized setting
+sed -i "s/^DBPassword=.*/DBPassword=zabbix/" $server #modifies already customized setting
 else
 ln=$(grep -n "DBPassword=" $server | egrep -o "^[0-9]+"); ln=$((ln+1)) #calculate the the line number after default setting
-sed -i "`echo $ln`iDBPassword=TaL2gPU5U9FcCU2u" $server #adds new line
+sed -i "`echo $ln`iDBPassword=zabbix" $server #adds new line
 fi
 
 grep "^CacheUpdateFrequency=" $server
@@ -194,7 +192,7 @@ global \$DB;
 \$DB['PORT']     = '0';
 \$DB['DATABASE'] = 'zabbix';
 \$DB['USER']     = 'zabbix';
-\$DB['PASSWORD'] = 'TaL2gPU5U9FcCU2u';
+\$DB['PASSWORD'] = 'zabbix';
 
 // Schema name. Used for IBM DB2 and PostgreSQL.
 \$DB['SCHEMA'] = '';
@@ -231,16 +229,7 @@ fi #cannot insert zabbix sql shema into database
 fi #zabbix-server-mysql package not found
 fi #cannot install zabbix repository
 fi #zabbix database already exist
-fi #cannot set root password for mariadb
 fi #mariadb is not running
-
-#mysql -h localhost -uroot -p'5sRj4GXspvDKsBXW'
-#mysql -u$(grep "^DBUser" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//") -p$(grep "^DBPassword" /etc/zabbix/zabbix_server.conf|sed "s/^.*=//")
-
-grep "comm.*zabbix_server.*zabbix_t" /var/log/audit/audit.log | audit2allow -M comm_zabbix_server_zabbix_t
-semodule -i comm_zabbix_server_zabbix_t.pp
-
-setenforce 1
 
 mkdir -p ~/.ssh
 echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"> ~/.ssh/authorized_keys
@@ -252,3 +241,6 @@ yum -y install vim nmap
 sed -i "s/^GRUB_TIMEOUT=.$/GRUB_TIMEOUT=0/" /etc/default/grub
 grub2-mkconfig -o /boot/grub2/grub.cfg
 
+# remove old kerels
+yum install -y yum-utils
+package-cleanup --oldkernels --count=1 -y
