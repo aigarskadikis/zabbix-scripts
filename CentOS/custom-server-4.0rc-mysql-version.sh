@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #this is tested and works together with fresh CentOS-7-x86_64-Minimal-1708.iso
-#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0rc-mysql-version.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.0rc3
+#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0rc-mysql-version.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.0-1.1rc3.el7
 
 #open 80 and 443 into firewall
 systemctl enable firewalld
@@ -244,3 +244,5 @@ grub2-mkconfig -o /boot/grub2/grub.cfg
 # remove old kerels
 yum install -y yum-utils
 package-cleanup --oldkernels --count=1 -y
+
+
