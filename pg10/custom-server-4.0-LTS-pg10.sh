@@ -2,6 +2,11 @@
 
 #cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/pg10/custom-server-4.0-LTS-pg10.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.3
 
+# https://www.postgresql.org/docs/10/ddl-partitioning.html
+# https://postgrespro.ru/docs/postgresql/10/ddl-partitioning#
+
+# https://tecadmin.net/install-postgresql-server-centos/
+
 #open 80 and 443 into firewall
 systemctl enable firewalld
 systemctl start firewalld
@@ -37,6 +42,20 @@ yum -y install postgresql10-server postgresql10
 # initialize database
 /usr/pgsql-10/bin/postgresql-10-setup initdb
 
+systemctl status postgresql-10.service
+systemctl stop postgresql-10.service
+
+# set permissions
+cp /var/lib/pgsql/10/data/{pg_hba.conf,pg_hba.conf.original}
+cat <<'EOF'> /var/lib/pgsql/10/data/pg_hba.conf
+# "local" is for Unix domain socket connections only
+local   all             all                                     md5
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            md5
+# IPv6 local connections:
+host    all             all             ::1/128                 md5
+EOF
+
 systemctl start postgresql-10.service
 systemctl enable postgresql-10.service
 
@@ -51,8 +70,10 @@ sudo -u postgres createdb -O zabbix zabbix
 
 yum -y install zabbix-server-pgsql zabbix-web-pgsql zabbix-agent zabbix-get zabbix-sender
 
-
 zcat /usr/share/doc/zabbix-server-pgsql*/create.sql.gz | sudo -u zabbix psql zabbix
+
+# install aditional modules for python
+yum -y install epel-release && yum -y install python2-pyyaml python-psycopg2 pytz
 
 #define server conf file
 server=/etc/zabbix/zabbix_server.conf
@@ -77,16 +98,6 @@ fi
 sed -i "s/^.*php_value date.timezone .*$/php_value date.timezone Europe\/Riga/" /etc/httpd/conf.d/zabbix.conf
 
 
-cp /var/lib/pgsql/10/data/{pg_hba.conf,pg_hba.conf.original}
-cat <<'EOF'> /var/lib/pgsql/10/data/pg_hba.conf
-# "local" is for Unix domain socket connections only
-local   all             all                                     md5
-# IPv4 local connections:
-host    all             all             127.0.0.1/32            md5
-# IPv6 local connections:
-host    all             all             ::1/128                 md5
-EOF
-
 # start everything after reboot
 systemctl restart postgresql-10 zabbix-server zabbix-agent httpd && systemctl enable zabbix-server zabbix-agent httpd
 
@@ -95,7 +106,7 @@ mkdir -p ~/.ssh
 echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"> ~/.ssh/authorized_keys
 chmod -R 700 ~/.ssh
 
-#decrease grup screen to 0 seconds
+#decrease grub screen to 0 seconds
 sed -i "s/^GRUB_TIMEOUT=.$/GRUB_TIMEOUT=0/" /etc/default/grub
 grub2-mkconfig -o /boot/grub2/grub.cfg
 
