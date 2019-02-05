@@ -93,76 +93,13 @@ grep -v "^$\|^#" $server
 echo
 
 #restart zabbix server
-systemctl restart zabbix-server
+systemctl start zabbix-server
 sleep 1
 
 #output all
 cat /var/log/zabbix/zabbix_server.log
 
-#enable rhel-7-server-optional-rpms repository. This is neccessary to successfully install frontend
-yum install yum-utils -y
-yum-config-manager --enable rhel-7-server-optional-rpms
-
-#install zabbix frontend
-yum install httpd -y
-yum install zabbix-web-mysql-$1 -y
-#configure timezone
-sed -i "s/^.*php_value date.timezone .*$/php_value date.timezone Europe\/Riga/" /etc/httpd/conf.d/zabbix.conf
-
-getsebool -a | grep "httpd_can_network_connect \|zabbix_can_network"
-setsebool -P httpd_can_network_connect on
-setsebool -P zabbix_can_network on
-getsebool -a | grep "httpd_can_network_connect \|zabbix_can_network"
-
-#configure zabbix to host on root
-grep "^Alias" /etc/httpd/conf.d/zabbix.conf
-if [ $? -ne 0 ]; then
-echo Alias not found in "/etc/httpd/conf.d/zabbix.conf". Something is out of order.
-else
-#replace one line:
-#Alias /zabbix /usr/share/zabbix-agent
-#with two lines
-#<VirtualHost *:80>
-#DocumentRoot /usr/share/zabbix
-sed -i "s/Alias \/zabbix \/usr\/share\/zabbix/<VirtualHost \*:80>\nDocumentRoot \/usr\/share\/zabbix/" /etc/httpd/conf.d/zabbix.conf
-
-#add to the end of the file:
-#</VirtualHost>
-grep "</VirtualHost>" /etc/httpd/conf.d/zabbix.conf
-if [ $? -eq 0 ]; then
-echo "</VirtualHost>" already exists in the file /etc/httpd/conf.d/zabbix.conf
-else
-echo "</VirtualHost>" >> /etc/httpd/conf.d/zabbix.conf
-fi
-
-sed -i "s/^/#/g" /etc/httpd/conf.d/welcome.conf
-
-cat > /etc/zabbix/web/zabbix.conf.php << EOF
-<?php
-// Zabbix GUI configuration file.
-global \$DB;
-
-\$DB['TYPE']     = 'MYSQL';
-\$DB['SERVER']   = 'localhost';
-\$DB['PORT']     = '0';
-\$DB['DATABASE'] = 'zabbix';
-\$DB['USER']     = 'zabbix';
-\$DB['PASSWORD'] = 'zabbix';
-
-// Schema name. Used for IBM DB2 and PostgreSQL.
-\$DB['SCHEMA'] = '';
-
-\$ZBX_SERVER      = 'localhost';
-\$ZBX_SERVER_PORT = '10051';
-\$ZBX_SERVER_NAME = '$1';
-
-\$IMAGE_FORMAT_DEFAULT = IMAGE_FORMAT_PNG;
-EOF
-
-systemctl restart httpd
-systemctl enable httpd
-
-yum install zabbix-agent-$1 -y
+yum -y install zabbix-agent
 
 #define agent conf file
 agent=/etc/zabbix/zabbix_agentd.conf
@@ -175,17 +112,9 @@ ln=$(grep -n "EnableRemoteCommands=" $agent | egrep -o "^[0-9]+"); ln=$((ln+1)) 
 sed -i "`echo $ln`iEnableRemoteCommands=1" $agent #adds new line
 fi
 
-yum install zabbix-sender-$1 -y
-yum install zabbix-get-$1 -y
-systemctl start zabbix-agent
-systemctl enable zabbix-agent
+systemctl start zabbix-agent && systemctl enable zabbix-agent
 
+yum -y install zabbix-sender zabbix-get
 
-#decrease grup screen to 0 seconds
-sed -i "s/^GRUB_TIMEOUT=.$/GRUB_TIMEOUT=0/" /etc/default/grub
-grub2-mkconfig -o /boot/grub2/grub.cfg
-
-# remove old kerels
-yum install -y yum-utils
-package-cleanup --oldkernels --count=1 -y
-
+# disable zabbix server at startup
+systemctl disable zabbix-server
