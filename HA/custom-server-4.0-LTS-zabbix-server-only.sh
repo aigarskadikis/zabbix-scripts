@@ -4,8 +4,7 @@
 #cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/custom-server-4.0-LTS-server-only-without-db.sh > install.sh && chmod +x install.sh && time ./install.sh 4.0.1
 
 #open 80 and 443 into firewall
-systemctl enable firewalld
-systemctl start firewalld
+systemctl enable firewalld && systemctl start firewalld
 
 firewall-cmd --permanent --add-service=http
 firewall-cmd --permanent --add-service=https
