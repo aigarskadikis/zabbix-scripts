@@ -1,8 +1,11 @@
 #!/bin/bash
 
-#cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/pg11/custom-server-4.0-LTS-pg11.sh > install.sh && chmod +x install.sh && time ./install.sh
+# cd && curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/pg11/custom-server-4.0-LTS-pg11.sh > install.sh && chmod +x install.sh && time ./install.sh
 
-#open 80 and 443 into firewall
+# to setup timescale
+# https://docs.timescale.com/v1.2/getting-started/installation/rhel-centos/installation-yum
+
+# open 80 and 443 into firewall
 systemctl enable firewalld && systemctl start firewalld
 
 firewall-cmd --permanent --add-service=http
@@ -14,10 +17,10 @@ firewall-cmd --reload
 sed -i "s/^SELINUX=.*$/SELINUX=permissive/" /etc/selinux/config
 setenforce 0
 
-#update system
+# update system
 yum update -y
 
-#install SELinux debuging utils
+# install SELinux debuging utils
 yum -y install policycoreutils-python bzip2 vim nmap yum-utils
 
 # install PostgreSQL 11 repository
