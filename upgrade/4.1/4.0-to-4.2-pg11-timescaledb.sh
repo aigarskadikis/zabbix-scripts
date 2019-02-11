@@ -51,6 +51,7 @@ systemctl disable zabbix-server zabbix-agent httpd
 
 # restore back the default pg conf
 cat /var/lib/pgsql/11/data/pg_hba.conf.original > /var/lib/pgsql/11/data/pg_hba.conf
+# 'pg_hba.conf.original' file is the file which comes out of the box with pg11 server. because of httpd there should be some adjustments which now (temporary) must be removed
 
 # install timescale feature
 yum -y install timescaledb-postgresql-11
