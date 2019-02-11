@@ -61,6 +61,24 @@ PATH=$PATH:/usr/pgsql-11/bin
 
 # enable timescale in database engine
 timescaledb-tune
+# Using postgresql.conf at this path:
+# /var/lib/pgsql/11/data/postgresql.conf
+# 
+# Is this correct? [(y)es/(n)o]: y
+# Writing backup to:
+# /tmp/timescaledb_tune.backup201902110933
+# 
+# shared_preload_libraries needs to be updated
+# Current:
+# #shared_preload_libraries = ''
+# Recommended:
+# shared_preload_libraries = 'timescaledb'
+# Is this okay? [(y)es/(n)o]: y
+# success: shared_preload_libraries will be updated
+# 
+# Tune memory/parallelism/WAL and other settings? [(y)es/(n)o]: n
+# Saving changes to: /var/lib/pgsql/11/data/postgresql.conf
+
 
 # restart client to take the effect
 systemctl restart postgresql-11
@@ -70,6 +88,25 @@ cd /var/lib/pgsql
 
 # enable extension for database 'zabbix'
 echo "CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;" | sudo -u postgres psql zabbix
+# WARNING:
+# WELCOME TO
+#  _____ _                               _     ____________
+# |_   _(_)                             | |    |  _  \ ___ \
+#   | |  _ _ __ ___   ___  ___  ___ __ _| | ___| | | | |_/ /
+#   | | | |  _ ` _ \ / _ \/ __|/ __/ _` | |/ _ \ | | | ___ \
+#   | | | | | | | | |  __/\__ \ (_| (_| | |  __/ |/ /| |_/ /
+#   |_| |_|_| |_| |_|\___||___/\___\__,_|_|\___|___/ \____/
+#                Running version 1.2.0
+# For more information on TimescaleDB, please visit the following links:
+# 
+#  1. Getting started: https://docs.timescale.com/getting-started
+#  2. API reference documentation: https://docs.timescale.com/api
+#  3. How TimescaleDB is designed: https://docs.timescale.com/introduction/architecture
+# 
+# Note: TimescaleDB collects anonymous reports to better understand and assist our users.
+# For more information and how to disable, please see our docs https://docs.timescaledb.com/using-timescaledb/telemetry.
+# 
+# CREATE EXTENSION
 
 # download latest dev source
 cd && curl -L "https://sourceforge.net/projects/zabbix/files/ZABBIX%20Latest%20Development/4.2.0alpha3/zabbix-4.2.0alpha3.tar.gz/download" > zabbix-dev.tar.gz
@@ -81,9 +118,90 @@ cd ~/zabbix-4.2*/database/postgresql
 ps aux|grep [z]abbix
 
 # patch database. make sure that no precesses (server or httpd) are using database
+cd /var/lib/pgsql
 cat timescaledb.sql | sudo -u zabbix psql zabbix
+# NOTICE:  migrating data to chunks
+# DETAIL:  Migration might take a while depending on the amount of data.
+#   create_hypertable
+# ----------------------
+#  (1,public,history,t)
+# (1 row)
+# 
+#                    set_adaptive_chunking
+# ------------------------------------------------------------
+#  (_timescaledb_internal.calculate_chunk_interval,120795955)
+# (1 row)
+# 
+# NOTICE:  migrating data to chunks
+# DETAIL:  Migration might take a while depending on the amount of data.
+#      create_hypertable
+# ---------------------------
+#  (2,public,history_uint,t)
+# (1 row)
+# 
+#                    set_adaptive_chunking
+# ------------------------------------------------------------
+#  (_timescaledb_internal.calculate_chunk_interval,120795955)
+# (1 row)
+# 
+#     create_hypertable
+# --------------------------
+#  (3,public,history_log,t)
+# (1 row)
+# 
+#                    set_adaptive_chunking
+# ------------------------------------------------------------
+#  (_timescaledb_internal.calculate_chunk_interval,120795955)
+# (1 row)
+# 
+#      create_hypertable
+# ---------------------------
+#  (4,public,history_text,t)
+# (1 row)
+# 
+#                    set_adaptive_chunking
+# ------------------------------------------------------------
+#  (_timescaledb_internal.calculate_chunk_interval,120795955)
+# (1 row)
+# 
+#     create_hypertable
+# --------------------------
+#  (5,public,history_str,t)
+# (1 row)
+# 
+#                    set_adaptive_chunking
+# ------------------------------------------------------------
+#  (_timescaledb_internal.calculate_chunk_interval,120795955)
+# (1 row)
+# 
+# NOTICE:  migrating data to chunks
+# DETAIL:  Migration might take a while depending on the amount of data.
+#   create_hypertable
+# ---------------------
+#  (6,public,trends,t)
+# (1 row)
+# 
+#                    set_adaptive_chunking
+# ------------------------------------------------------------
+#  (_timescaledb_internal.calculate_chunk_interval,120795955)
+# (1 row)
+# 
+# NOTICE:  migrating data to chunks
+# DETAIL:  Migration might take a while depending on the amount of data.
+#     create_hypertable
+# --------------------------
+#  (7,public,trends_uint,t)
+# (1 row)
+# 
+#                    set_adaptive_chunking
+# ------------------------------------------------------------
+#  (_timescaledb_internal.calculate_chunk_interval,120795955)
+# (1 row)
+# 
+# UPDATE 1
 
-# this may say:
+
+# if this says:
 # ERROR:  column "db_extension" of relation "config" does not exist
 # LINE 1: UPDATE config SET db_extension='timescaledb',hk_history_glob
 # this can mean that this is not 4.2
@@ -105,6 +223,7 @@ systemctl restart postgresql-11
 
 # start server
 systemctl start zabbix-server zabbix-agent httpd
+systemctl enable zabbix-server zabbix-agent httpd
 
 # see if no errors appears
 cat /var/log/zabbix/zabbix_server.log
