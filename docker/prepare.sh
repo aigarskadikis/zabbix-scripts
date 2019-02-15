@@ -58,3 +58,15 @@ docker stop wizardly_elgamal
 
 docker start zbx-docker-prx
 
+###### prepare docker-compose ########
+
+# install pip
+yum -y install epel-release && yum -y install python-pip
+ 
+# install docker-compose
+pip install -U docker-compose
+  
+# (optional) upgrade pip
+pip install --upgrade pip
+
+
