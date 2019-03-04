@@ -28,7 +28,7 @@ yum makecache
 yum install MariaDB-server MariaDB-client
 
 # During installation process MariaDB package will configure initial database and create redo log files with default file size. Remove these files: 
-rm -rf /var/lib/mysql/ib_logfile*
+rm -rf /var/lib/mysql/ib_logfile* # if change innodb_log_file_size= 32gb
 
 cat /etc/my.cnf.d/server.cnf
 #
