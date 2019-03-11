@@ -7,6 +7,9 @@ systemctl start firewalld
 firewall-cmd --permanent --add-service=http
 firewall-cmd --reload
 
+# make sure system is up to date
+yum -y update
+
 # disable selinux
 setenforce 0
 
