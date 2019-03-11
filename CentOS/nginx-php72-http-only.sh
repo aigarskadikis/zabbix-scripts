@@ -11,7 +11,7 @@ firewall-cmd --reload
 setenforce 0
 
 # set the version we are interested
-ver=$1
+# ver=$1
 ver=4.0.5
 
 yum -y install policycoreutils-python bzip2 nmap vim net-tools
@@ -105,9 +105,7 @@ systemctl status zabbix-server
 
 systemctl enable zabbix-server
 
-
-
-#install zabbix frontend
+# install zabbix frontend
 yum -y install nginx
 yum search fpm
 yum -y install php72w-fpm
@@ -242,8 +240,6 @@ server {
                 fastcgi_pass    127.0.0.1:9000;
         }
 }
-
-
 EOF
 
 # configure frontend
@@ -289,4 +285,3 @@ yum -y install zabbix-sender-$ver
 yum -y install zabbix-get-$ver
 systemctl start zabbix-agent
 systemctl enable zabbix-agent
-
