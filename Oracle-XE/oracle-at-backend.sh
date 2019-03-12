@@ -59,7 +59,7 @@ tnsping XE # try to ping TNSNAME. to this point it should retreive 'OK' at the l
 
 # download zabbix source archive into oracle profile
 cd
-v=4.0.0
+v=4.0.5
 curl -L "http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/$v/zabbix-$v.tar.gz" -o zabbix-$v.tar.gz
 tar -vzxf zabbix-$v.tar.gz -C .
 cd ~/zabbix-$v/database/oracle
@@ -134,10 +134,10 @@ exit
 
 # download source of zabbix
 cd
-v=4.0.0
+v=4.0.5
 curl -L "http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/$v/zabbix-$v.tar.gz" -o zabbix-$v.tar.gz
 tar -vzxf zabbix-$v.tar.gz -C .
-cd zabbix-$v
+cd ~/zabbix-$v
 
 # create user 'zabbix' and assign it to group 'zabbix'
 groupadd zabbix
@@ -147,11 +147,22 @@ useradd -g zabbix zabbix
 #./configure --enable-proxy --enable-agent --with-oracle --with-unixodbc --with-net-snmp --with-ssh2 --with-openssl --with-libcurl --sysconfdir=/etc/zabbix --prefix=/usr
 
 # maybe it is ok te manage the agent binary from repository.
-# only the proxy (without agent) will be maintained 
+# only the proxy (without agent) will be maintained
+yum -y install libssh2-devel # configure: error: SSH2 library not found
+yum -y install libcurl-devel # configure: error: Curl library not found
+
+# check if everything is in place
 ./configure --enable-proxy --with-oracle --with-unixodbc --with-net-snmp --with-ssh2 --with-openssl --with-libcurl --sysconfdir=/etc/zabbix --prefix=/usr
 
 # compile
-time make 
+time make
+
+# backup previous binary
+oldver=$(zabbix_proxy -V | grep zabbix_proxy | grep -E -o "[0-9\.]+")
+mkdir -p ~/$oldver
+cd /usr/sbin
+mkdir -p ~/$oldver$(pwd)
+cp /usr/sbin/zabbix_proxy ~/$oldver$(pwd)
 
 # install everything
 make install
