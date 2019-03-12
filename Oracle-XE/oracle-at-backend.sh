@@ -164,14 +164,28 @@ cd /usr/sbin
 mkdir -p ~/$oldver$(pwd)
 cp /usr/sbin/zabbix_proxy ~/$oldver$(pwd)
 
+# stop existing binary
+systemctl stop zabbix-proxy
+tail -10 /var/log/zabbix/zabbix_proxy.log
+
+# check if proxy is in old version
+zabbix_proxy -V
+
 # install everything
 make install
+
+# check if proxy is in new version
+zabbix_proxy -V
+
+# start proxy
+systemctl start zabbix-proxy
+tail -10 /var/log/zabbix/zabbix_proxy.log
 
 grep -v "^$\|#" /etc/zabbix/zabbix_proxy.conf
 # modify the values to look similar to this
 Server=ec2-35-166-97-138.us-west-2.compute.amazonaws.com
-Hostname=orcl-xe-pxy
-LogFile=/tmp/zabbix_proxy.log
+Hostname=BeeBoxProxY
+LogFile=/var/log/zabbix/zabbix_proxy.log
 DBName=XE
 DBUser=zabbix
 DBPassword=zabbix
@@ -184,8 +198,8 @@ cp /etc/zabbix/{zabbix_proxy.conf,original.zabbix_proxy.conf}
 # fast configuration install. overwrite original
 cat >/etc/zabbix/zabbix_proxy.conf<< EOL
 Server=ec2-35-166-97-138.us-west-2.compute.amazonaws.com
-Hostname=orcl-xe-pxy
-LogFile=/tmp/zabbix_proxy.log
+Hostname=BeeBoxProxY
+LogFile=/var/log/zabbix/zabbix_proxy.log
 DBName=XE
 DBUser=zabbix
 DBPassword=zabbix
