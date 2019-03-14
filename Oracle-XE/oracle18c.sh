@@ -215,3 +215,93 @@ echo "/usr/lib/oracle/18.3/client64/lib" > /etc/ld.so.conf.d/oracle-client-18.3.
 ldconfig -v
 # chmod o+r /etc/ld.so.conf.d/oracle-client-18.3.conf
 
+
+
+cat <<'EOF'> /etc/profile.d/oracle18c.sh
+export ORACLE_SID=XE 
+export ORAENV_ASK=NO 
+. /opt/oracle/product/18c/dbhomeXE/bin/oraenv
+EOF
+chmod o+r /etc/profile.d/oracle18c.sh
+
+echo $ORACLE_HOME
+echo $LD_LIBRARY_PATH
+tnsping XE
+
+
+# prerequsites to compile proxy
+yum -y install gcc make net-snmp-devel libssh2-devel libcurl-devel unixODBC-devel bc net-tools vim unzip mlocate policycoreutils-python
+
+
+su - oracle
+echo $ORACLE_HOME
+echo $LD_LIBRARY_PATH
+tnsping XE
+
+
+# download zabbix source archive into oracle profile
+cd
+v=4.0.5
+curl -L "http://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/$v/zabbix-$v.tar.gz" -o zabbix-$v.tar.gz
+tar -vzxf zabbix-$v.tar.gz -C .
+cd ~/zabbix-$v/database/oracle
+cp *.sql ~
+
+# enter database administration with oracle super user 
+sqlplus sys as sysdba
+# '5sRj4GXspvDKsBXW'
+
+# This should show:
+# Connected to:
+# Oracle Database 18c Express Edition Release 18.0.0.0.0 - Production
+# Version 18.4.0.0.0
+
+
+select parameter,value from v$nls_parameters where parameter='NLS_CHARACTERSET' or parameter='NLS_NCHAR_CHARACTERSET';
+# this should report
+# NLS_CHARACTERSET
+# AL32UTF8
+
+# NLS_NCHAR_CHARACTERSET
+# UTF8
+
+# if not then execute these commands:
+
+shutdown immediate
+startup mount
+alter system enable restricted session;
+alter system set job_queue_processes=0;
+alter system set aq_tm_processes=0;
+alter database open;
+ALTER DATABASE NATIONAL CHARACTER SET internal_use UTF8;
+shutdown immediate
+startup
+
+# check again
+select parameter,value from v$nls_parameters where parameter='NLS_CHARACTERSET' or parameter='NLS_NCHAR_CHARACTERSET';
+
+# test some status
+select * from v$sysstat;
+
+CREATE TABLESPACE "ZABBIX_TS" DATAFILE '/opt/oracle/oradata/XE/zabbix_ts.dbf' SIZE 100M AUTOEXTEND ON NEXT 536870912 MAXSIZE 20G LOGGING ONLINE PERMANENT BLOCKSIZE 8192 EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO;
+CREATE USER zabbix IDENTIFIED BY zabbix DEFAULT TABLESPACE ZABBIX_TS;
+
+# ORA-65096: invalid common user or role name
+
+GRANT DBA TO zabbix WITH ADMIN OPTION;
+exit
+
+
+CREATE USER sidney 
+    IDENTIFIED BY out_standing1 
+    DEFAULT TABLESPACE example 
+    QUOTA 10M ON example 
+    TEMPORARY TABLESPACE temp
+    QUOTA 5M ON system 
+    PROFILE app_user 
+    PASSWORD EXPIRE;
+
+
+
+
+
