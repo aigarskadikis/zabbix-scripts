@@ -282,9 +282,32 @@ select parameter,value from v$nls_parameters where parameter='NLS_CHARACTERSET' 
 
 # test some status
 select * from v$sysstat;
+select cdb from v$database;
+select name from v$datafile; 
+
+
+sqlplus / as sysdba
+
+
+
+# DROP TABLESPACE "ZABBIX_TS" INCLUDING CONTENTS AND DATAFILES;
+
+
 
 CREATE TABLESPACE "ZABBIX_TS" DATAFILE '/opt/oracle/oradata/XE/zabbix_ts.dbf' SIZE 100M AUTOEXTEND ON NEXT 536870912 MAXSIZE 20G LOGGING ONLINE PERMANENT BLOCKSIZE 8192 EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO;
 CREATE USER zabbix IDENTIFIED BY zabbix DEFAULT TABLESPACE ZABBIX_TS;
+
+
+CREATE USER zabbix 
+    IDENTIFIED BY zabbix 
+    DEFAULT TABLESPACE ZABBIX_TS 
+    QUOTA 10M ON ZABBIX_TS 
+    TEMPORARY TABLESPACE temp
+    QUOTA 5M ON system 
+    PROFILE app_user 
+    PASSWORD EXPIRE;
+
+
 
 # ORA-65096: invalid common user or role name
 
