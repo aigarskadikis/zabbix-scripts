@@ -34,7 +34,7 @@ yum -y update zabbix-*
 
 systemctl start zabbix-server
 
-tailf /var/log/zabbix_server.log
+tail -50f /var/log/zabbix/zabbix_server.log
 
 # see the difference of tables
 show create table history_text_old\G;
