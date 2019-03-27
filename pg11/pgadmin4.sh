@@ -84,3 +84,11 @@ systemctl restart httpd
 # password: x@y.zz
 
 
+# Create a new server name "first", go to second tab "Connections" enter:
+# Host: 127.0.0.1
+
+
+
+find / -name pg_dump
+
+
