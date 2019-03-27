@@ -17,7 +17,7 @@ firewall-cmd --reload
 yum -y update
 
 # install SELinux debuging utils
-yum -y install policycoreutils-python bzip2 vim nmap
+yum -y install policycoreutils-python vim nmap
 
 #  install repo
 cat <<'EOF'> /etc/yum.repos.d/MariaDB.repo
@@ -37,9 +37,11 @@ yum makecache fast
 # install mariadb (mysql database engine for CentOS 7)
 yum -y install MariaDB-server MariaDB-client
 # this will install database server with no root password
+sleep 1
 
 # start mariadb service
 systemctl start mariadb
+sleep 1
 
 # show existing databases
 mysql <<< 'show databases;' | grep zabbix
@@ -68,6 +70,8 @@ yum -y install zabbix-server-mysql
 cd /usr/share/doc/zabbix-server-mysql*/
 ls -lh
 zcat create.sql.gz | mysql zabbix
+
+# create partitions here if necesary
 
 # restore from backup if necesary
 # zcat dbdump.bz2 | mysql zabbix
