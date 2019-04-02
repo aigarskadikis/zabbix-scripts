@@ -1,10 +1,10 @@
 # install mod SSL:
 yum -y install mod_ssl
 
-# move to HTTPD cond dir:
+# move to HTTPD conf dir:
 cd /etc/httpd/conf.d
 
-# make inactive original cofig:
+# make inactive original config:
 mv ssl.conf conf.ssl
 
 # create dir for self-signed certificate:
