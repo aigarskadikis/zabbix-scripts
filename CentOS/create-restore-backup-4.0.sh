@@ -35,6 +35,7 @@ mysql <<< 'grant all privileges on zabbix.* to "zabbix"@"localhost" identified b
 cd /usr/share/doc/zabbix-server-mysql*/
 ls -lh
 zcat create.sql.gz | mysql zabbix
+zcat /root/zbx.all.gz | mysql zabbix
 
 cd && zcat conf.only.gz | mysql zabbix
 systemctl start zabbix-server httpd zabbix-agent
