@@ -54,6 +54,11 @@ yum -y install postgresql11-server postgresql11
 systemctl status postgresql-11 && systemctl stop postgresql-11
 
 # set permissions
+cat <<'EOF'> /var/lib/pgsql/11/data/pg_hba.conf
+local   all             all                                     trust
+host    all             all             127.0.0.1/32            trust
+host    all             all             ::1/128                 trust
+EOF
 
 systemctl start postgresql-11 && systemctl enable postgresql-11
 
@@ -67,7 +72,6 @@ sudo -u postgres bash -c "psql -c \"CREATE USER zabbix WITH PASSWORD 'zabbix';\"
 # sudo -u postgres bash -c "psql -c \"DROP DATABASE IF EXISTS zabbix;\""
 
 # create database 'zabbix'. owner is user 'zabbix'
-
 sudo -u postgres createdb -O zabbix zabbix
 
 # install server
@@ -261,12 +265,9 @@ sed -i "s/^.*php_value date.timezone .*$/php_value date.timezone Europe\/Riga/" 
 # allow httpd to connect to pg database
 cp /var/lib/pgsql/11/data/{pg_hba.conf,pg_hba.conf.original}
 cat <<'EOF'> /var/lib/pgsql/11/data/pg_hba.conf
-# "local" is for Unix domain socket connections only
-local   all             all                                     md5
-# IPv4 local connections:
-host    all             all             127.0.0.1/32            md5
-# IPv6 local connections:
-host    all             all             ::1/128                 md5
+local   all             all                                     trust
+host    all             all             127.0.0.1/32            trust
+host    all             all             ::1/128                 trust
 EOF
 
 cat <<'EOF'> /etc/zabbix/web/zabbix.conf.php
