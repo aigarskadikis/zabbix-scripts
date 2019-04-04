@@ -47,9 +47,13 @@ systemctl start postgresql-11 && systemctl enable postgresql-11
 cd /var/lib/pgsql
 
 # create database user
+# 
 sudo -u postgres bash -c "psql -c \"CREATE USER zabbix WITH PASSWORD 'zabbix';\""
 
+# sudo -u postgres bash -c "psql -c \"DROP DATABASE IF EXISTS zabbix;\""
+
 # create database 'zabbix'. owner is user 'zabbix'
+
 sudo -u postgres createdb -O zabbix zabbix
 
 # install server
