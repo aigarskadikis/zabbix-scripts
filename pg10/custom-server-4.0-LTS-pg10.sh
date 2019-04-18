@@ -25,8 +25,8 @@ setenforce 0
 #update system
 yum update -y
 
-#install SELinux debuging utils
-yum -y install policycoreutils-python bzip2 vim nmap yum-utils
+#install som conveniences
+yum -y install vim nmap yum-utils
 
 # install PostgreSQL 10 repository
 rpm -Uvh https://yum.postgresql.org/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
@@ -48,12 +48,9 @@ systemctl stop postgresql-10.service
 # set permissions
 cp /var/lib/pgsql/10/data/{pg_hba.conf,pg_hba.conf.original}
 cat <<'EOF'> /var/lib/pgsql/10/data/pg_hba.conf
-# "local" is for Unix domain socket connections only
-local   all             all                                     md5
-# IPv4 local connections:
-host    all             all             127.0.0.1/32            md5
-# IPv6 local connections:
-host    all             all             ::1/128                 md5
+local   all             all                                     trust
+host    all             all             127.0.0.1/32            trust
+host    all             all             ::1/128                 trust
 EOF
 
 systemctl start postgresql-10.service
