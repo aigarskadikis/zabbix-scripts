@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# cd && curl -sL https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/CentOS/switch.sh > switch.sh && chmod +x switch.sh && cat switch.sh
+
 # stop all components
 systemctl stop zabbix-server httpd zabbix-agent
 

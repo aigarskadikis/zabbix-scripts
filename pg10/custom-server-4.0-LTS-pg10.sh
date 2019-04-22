@@ -109,3 +109,4 @@ grub2-mkconfig -o /boot/grub2/grub.cfg
 
 # remove old kerels
 package-cleanup --oldkernels --count=1 -y
+
