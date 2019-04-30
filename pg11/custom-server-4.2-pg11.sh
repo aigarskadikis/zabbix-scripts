@@ -43,7 +43,7 @@ EOL
 # install zabbix repo
 rpm -Uvh http://repo.zabbix.com/zabbix/4.2/rhel/7/x86_64/zabbix-release-4.2-1.el7.noarch.rpm
 
-yum makecache fast
+yum -y makecache fast
 
 # install PostgreSQL 11 Server
 yum -y install postgresql11-server postgresql11
@@ -261,14 +261,6 @@ fi
 
 # set the frontend
 sed -i "s/^.*php_value date.timezone .*$/php_value date.timezone Europe\/Riga/" /etc/httpd/conf.d/zabbix.conf
-
-# allow httpd to connect to pg database
-cp /var/lib/pgsql/11/data/{pg_hba.conf,pg_hba.conf.original}
-cat <<'EOF'> /var/lib/pgsql/11/data/pg_hba.conf
-local   all             all                                     trust
-host    all             all             127.0.0.1/32            trust
-host    all             all             ::1/128                 trust
-EOF
 
 cat <<'EOF'> /etc/zabbix/web/zabbix.conf.php
 <?php
