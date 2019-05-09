@@ -1,6 +1,6 @@
 #!/bin/bash
 
-yum install yum-utils
+yum -y install yum-utils
 
 # add docer repo
 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
@@ -9,13 +9,50 @@ yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce
 cat /etc/yum.repos.d/docker-ce.repo
 
 # install docker community edition
-yum install docker-ce
+yum -y install docker-ce
 
 # start docker
 systemctl start docker
 
 # enable at startup
 systemctl enable docker
+
+
+###### prepare docker-compose ########
+
+# install pip
+yum -y install epel-release && yum -y install python-pip
+ 
+# install docker-compose
+pip install -U docker-compose
+  
+# (optional) upgrade pip
+pip install --upgrade pip
+
+# install git
+yum -y install git
+
+# install docker zabbix repo
+cd
+git clone https://github.com/zabbix/zabbix-docker.git
+git checkout 4.0
+git checkout 4.2
+
+# the magic happens here. remove the component you do not like
+vim docker-compose_v3_alpine_mysql_latest.yaml
+
+# or use yq utility to remove some parts
+
+docker-compose -f docker-compose_v3_alpine_mysql_latest.yaml up -d
+
+# observe the processes on fire
+docker ps
+
+# search the id for mysql container
+docker ps | grep " mysql:" | grep -E -o "^[0-9a-f]+"
+
+# open bash for particular container
+docker exec -it 2fbaaa453db3 /bin/bash
 
 
 # delete all conteiners. fresh start
@@ -58,15 +95,5 @@ docker stop wizardly_elgamal
 
 docker start zbx-docker-prx
 
-###### prepare docker-compose ########
-
-# install pip
-yum -y install epel-release && yum -y install python-pip
- 
-# install docker-compose
-pip install -U docker-compose
-  
-# (optional) upgrade pip
-pip install --upgrade pip
 
 
