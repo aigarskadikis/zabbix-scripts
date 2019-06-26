@@ -38,11 +38,20 @@ sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F2
 sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.3/ubuntu bionic main'
 
 sudo apt -y update
-sudo apt -y install mariadb-server
+sudo apt -y install mariadb-server mariadb-client
+
+rm -rf /var/lib/mysql/ib_logfile*
+
+sudo systemctl status mariadb
+sudo systemctl start mariadb
+sudo systemctl enable mariadb
 
 
-
-
+# run on node1
+mysql <<< 'GRANT REPLICATION SLAVE ON *.* TO "replicator"@"10.1.10.6" identified by "replicator"; FLUSH PRIVILEGES;'
+sudo ufw allow 3306
+# run on node2
+mysql <<< 'GRANT REPLICATION SLAVE ON *.* TO "replicator"@"10.1.10.5" identified by "replicator"; FLUSH PRIVILEGES;'
 
 
 
