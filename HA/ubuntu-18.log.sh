@@ -201,11 +201,9 @@ netstat -an | grep 3306
 mysql <<< 'show variables like "server_id";'
 
 
-
 # ==== ON NODE1 =======
 
 mysql <<< 'FLUSH TABLES WITH READ LOCK;'
-
 
 # create a backup of node1
 cd /home/vagrant
@@ -253,7 +251,4 @@ mysql <<< 'CHANGE MASTER TO master_host="10.1.10.6", master_port=3306, master_us
 mysql <<< 'start slave;'
 mysql <<< 'show slave status\G;'
 mysql <<< 'UNLOCK TABLES;'
-
-
-
 
