@@ -25,6 +25,7 @@ sudo systemctl status ntp
 # install timezone
 sudo cp /usr/share/zoneinfo/Europe/Riga /etc/localtime
 # check date now
+sudo dpkg-reconfigure --frontend noninteractive tzdata
 date
 
 
@@ -251,4 +252,9 @@ mysql <<< 'CHANGE MASTER TO master_host="10.1.10.6", master_port=3306, master_us
 mysql <<< 'start slave;'
 mysql <<< 'show slave status\G;'
 mysql <<< 'UNLOCK TABLES;'
+
+
+
+
+
 
