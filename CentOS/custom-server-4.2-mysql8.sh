@@ -28,7 +28,7 @@ systemctl start mysqld
 sleep 1
 
 # install passwordless access
-echo -e "[client]\nuser=root\npassword=$(grep "A temporary password" /var/log/mysqld.log | tail -1 | sed "s|^.*: ||g")" > ~/.my.cnf
+echo -e "[client]\nuser=root\npassword=\"$(grep "A temporary password" /var/log/mysqld.log | tail -1 | sed "s|^.*: ||g")\"" > ~/.my.cnf
 cat ~/.my.cnf
 chmod 600 .my.cnf
 
@@ -175,14 +175,14 @@ global \$DB;
 \$DB['PORT']     = '0';
 \$DB['DATABASE'] = 'zabbix';
 \$DB['USER']     = 'zabbix';
-\$DB['PASSWORD'] = 'zabbix';
+\$DB['PASSWORD'] = '5#sRj4GXspvDKsBXW';
 
 // Schema name. Used for IBM DB2 and PostgreSQL.
 \$DB['SCHEMA'] = '';
 
 \$ZBX_SERVER      = 'localhost';
 \$ZBX_SERVER_PORT = '10051';
-\$ZBX_SERVER_NAME = '$(zabbix_server -V | head -1 | grep -o -E "[0-9]+\.[0-9]")';
+\$ZBX_SERVER_NAME = 'mysql8';
 
 \$IMAGE_FORMAT_DEFAULT = IMAGE_FORMAT_PNG;
 EOF
