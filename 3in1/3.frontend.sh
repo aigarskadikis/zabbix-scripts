@@ -148,7 +148,7 @@ cat <<'EOF'> zabbix.conf.php
 global $DB;
 
 $DB['TYPE']     = 'MYSQL';
-$DB['SERVER']   = '10.79.7.37';
+$DB['SERVER']   = 'ip.of.db.server';
 $DB['PORT']     = '0';
 $DB['DATABASE'] = 'zabbix';
 $DB['USER']     = 'zabbix';
@@ -157,12 +157,14 @@ $DB['PASSWORD'] = 'zabbix';
 // Schema name. Used for IBM DB2 and PostgreSQL.
 $DB['SCHEMA'] = '';
 
-$ZBX_SERVER      = '10.79.29.38';
+$ZBX_SERVER      = 'ip.of.backend.server';
 $ZBX_SERVER_PORT = '10051';
 $ZBX_SERVER_NAME = '';
 
 $IMAGE_FORMAT_DEFAULT = IMAGE_FORMAT_PNG;
 EOF
+
+setenforce 0
 
 # restart nginx
 systemctl restart php-fpm nginx
@@ -173,3 +175,7 @@ netstat -tulpn|grep 80
 # test if there is zabbix fronend serving
 curl -kL http://127.0.0.1 | grep -i zabbix
 
+# now can use frontend
+ip a
+# username: Admin
+# password: zabbix

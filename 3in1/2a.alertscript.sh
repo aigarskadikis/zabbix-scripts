@@ -17,7 +17,7 @@ yum -y install perl-devel
 cd ServiceNow-Perl-API
  
 perl Makefile.PL
-# warning will be on screen
+# warnings will be on screen
  
 make
  
@@ -29,3 +29,17 @@ make test
 make install
 
 cd ..
+
+# install service now script
+cat zservicenow-na.pl > /usr/lib/zabbix/alertscripts/zservicenow-na
+# set script executable and read only
+chmod 500 /usr/lib/zabbix/alertscripts/zservicenow-na
+
+# alert scripts direcotry in general should belong to user 'zabbix'
+chown zabbix. -R /usr/lib/zabbix/alertscripts
+
+cd /usr/lib/zabbix/alertscripts
+./zservicenow-na
+
+cat /var/log/zabbix/zabbix_servicenow_na.log
+# should print 'zservicenow-na 59 Usage error'
