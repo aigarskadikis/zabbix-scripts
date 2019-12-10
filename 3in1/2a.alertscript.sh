@@ -22,8 +22,10 @@ perl Makefile.PL
 make
  
 # for next command to succeed its required to have
-yum install perl-Test-use-ok
+yum -y install perl-Test-use-ok
 make test
 # othervise some major errors will be on screen, but thats OK
  
 make install
+
+cd ..
