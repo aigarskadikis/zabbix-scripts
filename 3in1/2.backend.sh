@@ -37,6 +37,9 @@ ls -l /usr/share/doc/zabbix-server-mysql*/
 # insert schema to the database 'zabbix' in the database host '10.132.148.248'
 zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -h'10.132.148.248' -u'zabbix' -p'zabbix' zabbix
 
+# set database host
+sed -i "s|^.*DBHost=.*$|DBHost=10.132.148.248|" /etc/zabbix/zabbix_server.conf
+
 # set database password
 sed -i "s|^.*DBPassword=|DBPassword=zabbix|" /etc/zabbix/zabbix_server.conf
 grep ^DB /etc/zabbix/zabbix_server.conf
@@ -49,3 +52,7 @@ systemctl start zabbix-server
 
 # make sure its scheduled at startup
 systemctl enable zabbix-server
+
+sleep 2
+
+cat /var/log/zabbix/zabbix_server.log
