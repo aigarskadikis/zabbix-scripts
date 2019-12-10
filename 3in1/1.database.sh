@@ -80,5 +80,11 @@ mysql -e 'grant all privileges on zabbix.* to "zabbix"@"10.132.175.115" identifi
 # allow frontend server to connect to database using username 'zabbix' and password 'zabbix'
 mysql -e 'grant all privileges on zabbix.* to "zabbix"@"10.132.159.105" identified by "zabbix"; flush privileges;'
 
+# install stored procedures for partitioning
+cat mysql.partitioning.sql | mysql zabbix
+
+# install cronjob
+echo "* * * * * root command=\"CALL partition_maintenance_all('zabbix');\" && mysql zabbix -e \"\$command\"" >> /etc/crontab
+
 # enable at startup
 systemctl enable mariadb
