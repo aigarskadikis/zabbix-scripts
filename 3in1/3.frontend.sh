@@ -140,15 +140,6 @@ server {
 }
 EOF
 
-# restart nginx
-systemctl restart php-fpm nginx
-
-# check if web server is listening on port 80
-netstat -tulpn|grep 80
-
-# test if there is zabbix fronend serving
-curl -kL http://127.0.0.1 | grep -i zabbix
-
 # configure access to database
 cd /etc/zabbix/web
 cat <<'EOF'> zabbix.conf.php
@@ -172,3 +163,13 @@ $ZBX_SERVER_NAME = '';
 
 $IMAGE_FORMAT_DEFAULT = IMAGE_FORMAT_PNG;
 EOF
+
+# restart nginx
+systemctl restart php-fpm nginx
+
+# check if web server is listening on port 80
+netstat -tulpn|grep 80
+
+# test if there is zabbix fronend serving
+curl -kL http://127.0.0.1 | grep -i zabbix
+
