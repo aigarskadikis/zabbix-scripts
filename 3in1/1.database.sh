@@ -75,7 +75,7 @@ netstat -tulpn|grep 3306
 mysql -e 'create database zabbix character set utf8 collate utf8_bin;'
 
 # allow backend server to connect to database using username 'zabbix' and password 'zabbix'
-mysql -e 'grant all privileges on zabbix.* to "zabbix"@"10.132.150.211" identified by "zabbix"; flush privileges;'
+mysql -e 'grant all privileges on zabbix.* to "zabbix"@"10.132.175.115" identified by "zabbix"; flush privileges;'
 
 # allow frontend server to connect to database using username 'zabbix' and password 'zabbix'
 mysql -e 'grant all privileges on zabbix.* to "zabbix"@"10.132.159.105" identified by "zabbix"; flush privileges;'
