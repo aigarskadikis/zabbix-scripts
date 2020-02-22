@@ -198,6 +198,13 @@ chown -R zabbix. /var/lib/zabbix
 fi
 
 
+# populate 'externalscripts' and 'alertscripts'
+if [ -d "usr/lib/zabbix" ]; then
+rsync -av --delete "usr/lib/zabbix" "/usr/lib"
+chown -R zabbix. /usr/lib/zabbix
+fi
+
+
 # restart components
 systemctl restart zabbix-server zabbix-agent2 zabbix-java-gateway
 systemctl enable zabbix-server zabbix-agent2 zabbix-java-gateway
