@@ -1,5 +1,6 @@
 #!/bin/bash
-# this secuence can be usefull only if the database gone corrupted
+
+# this sequence can be useful only if the database gone corrupted
 
 # backend and database server in this example runs on one server
 # backend, frontend, partitioning use the same password to access database
@@ -37,10 +38,6 @@ zcat db.conf.zabbix.gz | mysql -uzabbix -p$DBPassword zabbix
 # create database partitions
 /etc/zabbix/scripts/zabbix_partitioning.py -c /etc/zabbix/zabbix_partitioning.conf -i
 
-# start back componenents
+# start back components
 systemctl start mariadb zabbix-agent2 nginx php-fpm zabbix-server zabbix-java-gateway
-
-
-
-
 
