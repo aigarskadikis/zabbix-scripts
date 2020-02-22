@@ -1,17 +1,20 @@
 #!/bin/bash
 
 # This is a kickstart skript which will setup:
-# Zabbix server 4.4 on CentOS 8 with SNMP trap support
+# Zabbix server 4.4 on CentOS 8
 
-# if there is etc/zabbix/zabbix_server.conf persistent in current directory then
-# a database user will be made based the its content
+# if the backup file 'fs.conf.zabbix.tar.gz' is located in current dir
+# then based on it's content will setup:
+# * database access with same password
+# * zabbix java gateway
+# * SNMP trap receiver using 'zabbix_trap_receiver.pl'
+
+# this scipt is not dedicated to use while there is not access to internet
+
 
 # set SELinux to permissive
 setenforce 0
 
-if [ -f "fs.conf.zabbix.tar.gz" ]; then
-tar -vzxf fs.conf.zabbix.tar.gz
-fi
 
 # install conveniences
 dnf -y install vim nmap strace epel-release
@@ -19,6 +22,16 @@ dnf -y install vim nmap strace epel-release
 dnf -y install screen
 
 dnf -y install mariadb-server
+
+if [ -f "fs.conf.zabbix.tar.gz" ]; then
+tar -vzxf fs.conf.zabbix.tar.gz
+fi
+
+# copy SELinux global settings
+if [ -f "etc/selinux/config" ]; then
+cat etc/selinux/config > /etc/selinux/config
+fi
+
 
 # allow a lot of connections to the database server
 mkdir -p /etc/systemd/system/mariadb.service.d
@@ -28,7 +41,8 @@ systemctl daemon-reload
 # go back to directrory where script is executing
 cd -
 
-# if there are custom modifications made to database client 
+
+# populate previous database settings 
 if [ -f "etc/my.cnf.d/zabbix.cnf" ]; then
 cat etc/my.cnf.d/zabbix.cnf > /etc/my.cnf.d/zabbix.cnf
 
@@ -52,7 +66,7 @@ optimizer_switch=index_condition_pushdown=off
  
 EOF
 
-# go back to dir where script is located
+# go back to previous dir
 cd -
 
 fi
@@ -92,7 +106,7 @@ rpm -Uvh http://mirror.centos.org/centos/8.0.1905/AppStream/x86_64/os/Packages/l
 
 dnf -y install zabbix-server-mysql zabbix-agent2 zabbix-get zabbix-sender
 
-# detect java-gateway was installed locally before
+# detect if java-gateway was installed locally before
 if [ -f "etc/zabbix/zabbix_server.conf" ]; then
 grep ^JavaGateway etc/zabbix/zabbix_server.conf | grep 127.0.0.1
 if [ $? -eq 0 ]; then
@@ -103,7 +117,7 @@ fi
 
 # sync configuration for zabbix-server, zabbix-agent + UserParameter's, java gateway
 if [ -d "etc/zabbix" ]; then
-rsync -avu --delete "etc/zabbix" "/etc/zabbix"
+rsync -av --delete "etc/zabbix" "/etc"
 fi
 
 # enter dir where zabbix schema is located
@@ -155,20 +169,27 @@ ls -l /tmp/zabbix_traps.tmp
 
 
 
-if [ -f "etc/zabbix/zabbix_server.conf" ]; then
-cat etc/zabbix/zabbix_server.conf > /etc/zabbix/zabbix_server.conf
-fi
-
-
 if [ -d "var/lib/zabbix" ]; then
-mkdir -p /var/lib/zabbix
-rsync -avu --delete "var/lib/zabbix" "/var/lib/zabbix"
+rsync -av --delete "var/lib/zabbix" "/var/lib"
 chown -R zabbix. /var/lib/zabbix
 fi
 
 
 # install zabbix agent
-dnf -y install zabbix-agent2 
+systemctl restart zabbix-server zabbix-agent2 zabbix-java-gateway
+systemctl enable zabbix-server zabbix-agent2 zabbix-java-gateway
+
+
+dnf -y install zabbix-web-mysql zabbix-nginx-conf
+
+if [ -f "etc/nginx/conf.d/zabbix.conf" ]; then
+cat etc/nginx/conf.d/zabbix.conf > /etc/nginx/conf.d/zabbix.conf
+fi
+
+
+if [ -f "etc/crontab" ]; then
+cat etc/crontab > /etc/crontab
+fi
 
 
 
