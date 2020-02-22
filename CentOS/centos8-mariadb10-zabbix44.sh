@@ -204,9 +204,63 @@ systemctl enable zabbix-server zabbix-agent2 zabbix-java-gateway
 
 dnf -y install zabbix-web-mysql zabbix-nginx-conf
 
+# restore nginx conf
 if [ -f "etc/nginx/conf.d/zabbix.conf" ]; then
 cat etc/nginx/conf.d/zabbix.conf > /etc/nginx/conf.d/zabbix.conf
+
+# otherwise
+else
+
+# to determine what is externa IP address
+dnf -y install bind-utils
+connect=$(dig +short myip.opendns.com @resolver1.opendns.com)
+
+# configure web server to listen on external IP
+sed -i "s|^.*listen.*80.*$|listen 80;|1" /etc/nginx/conf.d/zabbix.conf 
+sed -i "s|^.*server_name.*example.com.*$|server_name $connect;|1" /etc/nginx/conf.d/zabbix.conf
 fi
+
+
+if [ -f "etc/php-fpm.d/zabbix.conf" ]; then
+cat etc/php-fpm.d/zabbix.conf > /etc/php-fpm.d/zabbix.conf
+else
+
+# set timezone
+timezone=Europe/Riga
+sed -i "s|^.*php_value.date.timezone.*$|php_value[date.timezone] = $timezone|" /etc/php-fpm.d/zabbix.conf
+fi
+
+if [ -f "etc/zabbix/web/zabbix.conf.php" ]; then
+cat etc/zabbix/web/zabbix.conf.php > /etc/zabbix/web/zabbix.conf.php
+
+else
+
+cat << 'EOF' > /etc/zabbix/web/zabbix.conf.php
+<?php
+// Zabbix GUI configuration file.
+global $DB;
+
+$DB['TYPE']     = 'MYSQL';
+$DB['SERVER']   = '127.0.0.1';
+$DB['PORT']     = '0';
+$DB['DATABASE'] = 'zabbix';
+$DB['USER']     = 'zabbix';
+$DB['PASSWORD'] = 'zabbix';
+
+// Schema name. Used for IBM DB2 and PostgreSQL.
+$DB['SCHEMA'] = '';
+
+$ZBX_SERVER      = '127.0.0.1';
+$ZBX_SERVER_PORT = '10051';
+$ZBX_SERVER_NAME = '';
+
+$IMAGE_FORMAT_DEFAULT = IMAGE_FORMAT_PNG;
+EOF
+
+fi
+
+systemctl restart nginx php-fpm
+systemctl enable nginx php-fpm
 
 
 if [ -f "etc/crontab" ]; then
