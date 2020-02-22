@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This is a kickstart skript which will setup:
+# This is a kickstart script which will setup:
 # Zabbix server 4.4 on CentOS 8
 
 # if the backup file 'fs.conf.zabbix.tar.gz' is located in current dir
@@ -9,7 +9,8 @@
 # * zabbix java gateway
 # * SNMP trap receiver using 'zabbix_trap_receiver.pl'
 
-# this scipt is not dedicated to use while there is not access to internet
+# an access to internet is required
+# the flow may fail if the database password contains '!' or '$'
 
 
 # add swap space
@@ -91,16 +92,16 @@ mysql -e 'select @@hostname, @@version, @@datadir, @@innodb_file_per_table, @@sk
 # create a blank database
 mysql -e 'create database zabbix character set utf8 collate utf8_bin;'
 
-# detect custom dedicated database password
+# detect old dedicated database password
 if [ -f "etc/zabbix/zabbix_server.conf" ]; then
 DBPassword=$(grep ^DBPassword etc/zabbix/zabbix_server.conf | sed "s%^DBPassword=%%")
+
+# use password 'zabbix'
 else
 DBPassword=zabbix
 fi
 
-
-
-# if there is a backend configuration backup then create database password based on it
+# create database
 if [ -f "etc/zabbix/zabbix_server.conf" ]; then
 mysql -e "grant all privileges on zabbix.* to zabbix@localhost identified by \"$DBPassword\";"
 fi
@@ -142,10 +143,12 @@ fi
 
 # if the partitioning script imported from backup then execute it
 if [ -f "/etc/zabbix/scripts/zabbix_partitioning.py" ]; then
+# install prerequsites for database partitioning
 dnf -y install python2
 dnf -y install python2-pyyaml
 pip2 install mysql-connector-python
 
+# if the configuration exists then create partitions
 if [ -f "/etc/zabbix/zabbix_partitioning.conf" ]; then
 chmod +x /etc/zabbix/scripts/zabbix_partitioning.py
 /etc/zabbix/scripts/zabbix_partitioning.py -c /etc/zabbix/zabbix_partitioning.conf -i
@@ -162,13 +165,12 @@ rpm --nodeps -ivh http://repo.okay.com.mx/centos/8/x86_64/release//net-snmp-perl
 cd /usr/bin
 curl -s  https://git.zabbix.com/projects/ZBX/repos/zabbix/raw/misc/snmptrap/zabbix_trap_receiver.pl?at=refs%2Fheads%2Fmaster > zabbix_trap_receiver.pl
 chmod +x zabbix_trap_receiver.pl
+cd -
  
 grep "zabbix_traps.tmp" /usr/bin/zabbix_trap_receiver.pl
  
-# install allowed communities
+# if there is a trap configuration from backup, then install allowed communities
 if [ -f "etc/snmp/snmptrapd.conf" ]; then
-
-# if there is a trap configuration from backup
 pkdir -p /etc/snmp
 cat etc/snmp/snmptrapd.conf > /etc/snmp/snmptrapd.conf
 
@@ -183,12 +185,11 @@ fi
 systemctl enable snmptrapd
 systemctl restart snmptrapd
 
-# test trap
+# send test trap
 snmptrap -v 1 -c public 127.0.0.1 '.1.3.6.1.6.3.1.1.5.3' '0.0.0.0' 6 33 '55' .1.3.6.1.6.3.1.1.5.3 s "eth0"
 
 # make sure 'zabbix_traps.tmp' exists
 ls -l /tmp/zabbix_traps.tmp
-
 
 
 if [ -d "var/lib/zabbix" ]; then
@@ -197,11 +198,11 @@ chown -R zabbix. /var/lib/zabbix
 fi
 
 
-# install zabbix agent
+# restart components
 systemctl restart zabbix-server zabbix-agent2 zabbix-java-gateway
 systemctl enable zabbix-server zabbix-agent2 zabbix-java-gateway
 
-
+# install frontend
 dnf -y install zabbix-web-mysql zabbix-nginx-conf
 
 # restore nginx conf
@@ -220,13 +221,13 @@ sed -i "s|^.*listen.*80.*$|listen 80;|1" /etc/nginx/conf.d/zabbix.conf
 sed -i "s|^.*server_name.*example.com.*$|server_name $connect;|1" /etc/nginx/conf.d/zabbix.conf
 fi
 
-
+# restore php fast processor manager. this contains a timezone configuration
 if [ -f "etc/php-fpm.d/zabbix.conf" ]; then
 cat etc/php-fpm.d/zabbix.conf > /etc/php-fpm.d/zabbix.conf
 else
 
-# set timezone
-timezone=Europe/Riga
+# otherwise pick up timezone configured for system
+timezone=$(timedatectl | grep "Time zone" | awk '{ print $3 }')
 sed -i "s|^.*php_value.date.timezone.*$|php_value[date.timezone] = $timezone|" /etc/php-fpm.d/zabbix.conf
 fi
 
