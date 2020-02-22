@@ -12,6 +12,15 @@
 # this scipt is not dedicated to use while there is not access to internet
 
 
+# add swap space
+dd if=/dev/zero of=/myswap bs=1M count=2048
+chown root:root /myswap
+chmod 0600 /myswap
+mkswap /myswap
+swapon /myswap
+echo '/myswap swap swap defaults 0 0' | sudo tee -a /etc/fstab
+
+
 # set SELinux to permissive
 setenforce 0
 
@@ -131,6 +140,19 @@ if [ -f "db.conf.zabbix.gz" ]; then
 zcat db.conf.zabbix.gz | mysql -uzabbix -p$DBPassword zabbix
 fi
 
+# if the partitioning script imported from backup then execute it
+if [ -f "/etc/zabbix/scripts/zabbix_partitioning.py" ]; then
+dnf -y install python2
+dnf -y install python2-pyyaml
+pip2 install mysql-connector-python
+
+if [ -f "/etc/zabbix/zabbix_partitioning.conf" ]; then
+chmod +x /etc/zabbix/scripts/zabbix_partitioning.py
+/etc/zabbix/scripts/zabbix_partitioning.py -c /etc/zabbix/zabbix_partitioning.conf -i
+
+fi
+
+fi
 
 # install SNMP trap support
 dnf install -y net-snmp-utils net-snmp
@@ -190,7 +212,5 @@ fi
 if [ -f "etc/crontab" ]; then
 cat etc/crontab > /etc/crontab
 fi
-
-
 
 
