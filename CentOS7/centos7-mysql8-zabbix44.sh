@@ -55,6 +55,9 @@ mysql -e 'flush privileges;'
 mysql -e 'CREATE USER "zabbix"@"127.0.0.1" IDENTIFIED BY "z4bbi#SIA";'
 mysql -e 'CREATE USER "zabbix"@"localhost" IDENTIFIED BY "z4bbi#SIA";'
 
+# from docker host
+mysql -e 'CREATE USER "zabbix"@"172.17.0.10" IDENTIFIED BY "z4bbi#SIA";'
+mysql -e 'CREATE USER "odbcuser"@"%" IDENTIFIED BY "z4bbi#SIA";'
 
 
 
@@ -62,10 +65,18 @@ mysql -e 'CREATE USER "zabbix"@"localhost" IDENTIFIED BY "z4bbi#SIA";'
 mysql -e 'ALTER USER "zabbix"@"127.0.0.1" IDENTIFIED WITH mysql_native_password BY "z4bbi#SIA";'
 mysql -e 'ALTER USER "zabbix"@"localhost" IDENTIFIED WITH mysql_native_password BY "z4bbi#SIA";'
 
+# allow DB to be accessed from docker host
+mysql -e 'ALTER USER "zabbix"@"172.17.0.10" IDENTIFIED WITH mysql_native_password BY "z4bbi#SIA";'
+mysql -e 'ALTER USER "odbcuser"@"%" IDENTIFIED WITH mysql_native_password BY "z4bbi#SIA";'
+
 # ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'identified by 'z4bbi#SIA'' at line 1
 # assign privilages
 mysql -e 'GRANT ALL ON zabbix.* TO "zabbix"@"127.0.0.1";'
 mysql -e 'GRANT ALL ON zabbix.* TO "zabbix"@"localhost";'
+
+# allow DB to be accessed from docker host
+mysql -e 'GRANT ALL ON zabbix.* TO "zabbix"@"172.17.0.10";'
+mysql -e 'GRANT ALL ON zabbix.* TO "odbcuser"@"%";'
 
 mysql -e 'flush privileges;'
 
