@@ -36,6 +36,8 @@ mysql -e 'CREATE DATABASE zabbix character set utf8 collate utf8_bin;'
 
 # DROP USER "zabbix"@"127.0.0.1";
 # DROP USER "zabbix"@"localhost";
+# DROP USER "root"@"localhost";
+
 # flush privileges;
 # CREATE USER "zabbix"@"127.0.0.1" IDENTIFIED BY "z4bbi#SIA";
 # CREATE USER "zabbix"@"localhost" IDENTIFIED BY "z4bbi#SIA";
@@ -59,10 +61,24 @@ mysql -e 'CREATE USER "zabbix"@"localhost" IDENTIFIED BY "z4bbi#SIA";'
 mysql -e 'ALTER USER "zabbix"@"127.0.0.1" IDENTIFIED WITH mysql_native_password BY "z4bbi#SIA";'
 mysql -e 'ALTER USER "zabbix"@"localhost" IDENTIFIED WITH mysql_native_password BY "z4bbi#SIA";'
 
+
+# ERROR 1396 (HY000): Operation ALTER USER failed for 'root'@'%'
+
+# for mysql monitoring using root from 127.0.0.1 while using 'skip_name_resolve=1'
+mysql -e 'ALTER USER "root"@"%" IDENTIFIED WITH mysql_native_password BY "z4bbi#SIA";'
+
+
 # ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'identified by 'z4bbi#SIA'' at line 1
 # assign privilages
 mysql -e 'GRANT ALL ON zabbix.* TO "zabbix"@"127.0.0.1";'
 mysql -e 'GRANT ALL ON zabbix.* TO "zabbix"@"localhost";'
+
+# perfect user root to use together with 'skip_name_resolve=1'
+DROP USER "root"@"localhost";
+FLUSH PRIVILEGES;
+CREATE USER "root"@"127.0.0.1" IDENTIFIED BY "z4bbi#SIA";
+ALTER USER "root"@"127.0.0.1" IDENTIFIED WITH mysql_native_password BY "z4bbi#SIA";
+FLUSH PRIVILEGES;
 
 mysql -e 'flush privileges;'
 
