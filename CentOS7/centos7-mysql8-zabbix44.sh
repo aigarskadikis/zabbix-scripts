@@ -84,6 +84,7 @@ mysql -e 'ALTER USER "odbcuser"@"%" IDENTIFIED WITH mysql_native_password BY "z4
 # assign privilages
 mysql -e 'GRANT ALL ON zabbix.* TO "zabbix"@"127.0.0.1";'
 mysql -e 'GRANT ALL ON zabbix.* TO "zabbix"@"localhost";'
+mysql -e 'GRANT ALL ON z40.* TO "zabbix"@"10.133.253.43";'
 
 <<<<<<< HEAD
 # perfect user root to use together with 'skip_name_resolve=1'
