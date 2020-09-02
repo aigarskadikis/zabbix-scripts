@@ -1,5 +1,19 @@
 #!/bin/bash
 
+
+sudo dd if=/dev/zero of=/myswap1 bs=1M count=1024 && sudo chown root:root /myswap1 && sudo chmod 0600 /myswap1 && sudo mkswap /myswap1 && sudo swapon /myswap1 && free -m
+
+sudo dd if=/dev/zero of=/myswap2 bs=1M count=1024 && sudo chown root:root /myswap2 && sudo chmod 0600 /myswap2 && sudo mkswap /myswap2 && sudo swapon /myswap2 && free -m
+
+sudo dd if=/dev/zero of=/myswap3 bs=1M count=1024 && sudo chown root:root /myswap3 && sudo chmod 0600 /myswap3 && sudo mkswap /myswap3 && sudo swapon /myswap3 && free -m
+
+sudo dd if=/dev/zero of=/myswap4 bs=1M count=1024 && sudo chown root:root /myswap4 && sudo chmod 0600 /myswap4 && sudo mkswap /myswap4 && sudo swapon /myswap4 && free -m
+
+echo 1 | sudo tee /proc/sys/vm/overcommit_memory
+
+setenforce 0
+
+
 # install repository
 sudo yum -y install https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm
 
@@ -102,10 +116,11 @@ FLUSH PRIVILEGES;
 '
 
 curl -kLs "https://cdn.zabbix.com/zabbix/sources/stable/5.0/zabbix-5.0.3.tar.gz" -o zabbix-source.tar.gz
-tar -xzfv zabbix-source.tar.gz 
+ls -lh
+tar -xzf zabbix-source.tar.gz 
 
 cd ~/zabbix-5.0.3/database/mysql
-cat schema.sql | mysql zabbix
+cat schema.sql images.sql data.sql | mysql zabbix
 
 mysql -e '
 ALTER TABLE `zabbix`.`history` ADD `id` bigint PRIMARY KEY AUTO_INCREMENT;
@@ -120,7 +135,10 @@ mysqlsh /c cluster_admin@mysql1:3306
 
 var i1='cluster_admin@mysql1:3306',i2='cluster_admin@mysql2:3306',i3='cluster_admin@mysql3:3306';
 
-dba.checkInstanceConfiguration(i1);dba.checkInstanceConfiguration(i2);dba.checkInstanceConfiguration(i3);
+dba.checkInstanceConfiguration(i1);
+# z4bbi#SIA
+dba.checkInstanceConfiguration(i2);
+dba.checkInstanceConfiguration(i3);
 
 
 var cluster=dba.createCluster('zabbix_cluster',{
