@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/mysql8cluster.sh > mysql8cluster.sh && chmod +x mysql8cluster.sh
 
 sudo dd if=/dev/zero of=/myswap1 bs=1M count=1024 && sudo chown root:root /myswap1 && sudo chmod 0600 /myswap1 && sudo mkswap /myswap1 && sudo swapon /myswap1 && free -m
 
@@ -138,7 +139,9 @@ var i1='cluster_admin@mysql1:3306',i2='cluster_admin@mysql2:3306',i3='cluster_ad
 dba.checkInstanceConfiguration(i1);
 # z4bbi#SIA
 dba.checkInstanceConfiguration(i2);
+# z4bbi#SIA
 dba.checkInstanceConfiguration(i3);
+# z4bbi#SIA
 
 
 var cluster=dba.createCluster('zabbix_cluster',{
@@ -148,3 +151,36 @@ ipWhitelist: "mysql1, mysql2, mysql3",
 localAddress: "mysql1"
 });
 
+cluster.status();
+
+
+cluster.addInstance(i2,{
+memberWeight: 30,
+ipWhitelist: "mysql1, mysql2, mysql3",
+localAddress: "mysql2:33061"
+});
+# press C to continue
+
+cluster.addInstance(i3,{
+memberWeight: 30,
+ipWhitelist: "mysql1, mysql2, mysql3",
+localAddress: "mysql3:33061"
+});
+
+\q
+
+# sudo yum -y install mysql-router-community
+
+# sudo mysqlrouter --bootstrap cluster_admin@mysql1:3306 --user=mysqlrouter --force
+# z4bbi#SIA
+
+# mysql --protocol=TCP -ucluster_admin -p -P 6446
+# z4bbi#SIA
+
+
+CREATE USER "zabbix"@"mysql1" IDENTIFIED WITH mysql_native_password BY "z4bbi#SIA";
+GRANT ALL PRIVILEGES ON zabbix.* TO "zabbix"@"mysql1";
+CREATE USER "zabbix"@"mysql2" IDENTIFIED WITH mysql_native_password BY "z4bbi#SIA";
+GRANT ALL PRIVILEGES ON zabbix.* TO "zabbix"@"mysql2";
+CREATE USER "zabbix"@"mysql3" IDENTIFIED WITH mysql_native_password BY "z4bbi#SIA";
+GRANT ALL PRIVILEGES ON zabbix.* TO "zabbix"@"mysql3";
