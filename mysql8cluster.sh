@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# MySQL Shell
+#   Configure and do all the backstage work
+#   Create a cluster
+#   Add and remove instances to the cluster
+#   Monitor the cluster
+#   Cluster management
+#   Besides doing queries, updates and administration operations to the instances
+# MySQL Router
+#   Create a proxy for the cluster
+#   Route database traffic
+
+
+
 # curl https://raw.githubusercontent.com/catonrug/zabbix-scripts/master/mysql8cluster.sh > mysql8cluster.sh && chmod +x mysql8cluster.sh
 
 sudo dd if=/dev/zero of=/myswap1 bs=1M count=1024 && sudo chown root:root /myswap1 && sudo chmod 0600 /myswap1 && sudo mkswap /myswap1 && sudo swapon /myswap1 && free -m
