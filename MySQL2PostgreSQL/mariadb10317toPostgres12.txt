@@ -1,0 +1,67 @@
+mkdir -p ~/mariadb/10.3.17/conf.d
+docker run --name mariadb10317 \
+-v /home/rancher/mariadb/10.3.17/conf.d:/etc/mysql/conf.d \
+-e MYSQL_ROOT_PASSWORD="zabbix" \
+-p 10317:3306 \
+-d mariadb:10.3.17
+
+
+dnf remove pgdg-redhat-repo
+
+# https://support.zabbix.com/browse/PSALE-631
+# https://www.postgresql.org/download/linux/redhat/
+# https://pgloader.readthedocs.io/en/latest/
+# https://centos.pkgs.org/8/raven-x86_64/pgloader-3.6.2-1.el8.x86_64.rpm.html
+# https://docs.timescale.com/latest/getting-started/installation/rhel-centos/installation-yum
+
+
+1) kickstart centos8
+# Install the repository RPM:
+dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+# Disable the built-in PostgreSQL module:
+dnf -qy module disable postgresql
+
+# Install PostgreSQL:
+dnf install -y postgresql12-server
+
+# Optionally initialize the database and enable automatic start:
+/usr/pgsql-12/bin/postgresql-12-setup initdb
+systemctl enable postgresql-12
+systemctl start postgresql-12
+
+
+# dependencies for pgloader
+dnf -y install openssl-devel
+
+# third party package
+rpm -ivh https://pkgs.dyn.su/el8/base/x86_64/pgloader-3.6.2-1.el8.x86_64.rpm
+
+
+
+# download 4.4 source
+cd
+curl -s https://cdn.zabbix.com/zabbix/sources/oldstable/4.4/zabbix-4.4.10.tar.gz -o zabbix-source.tar.gz
+ls -lh zabbix-source.tar.gz
+mkdir ~/zabbix-source
+gunzip zabbix-source.tar.gz && tar xvf zabbix-source.tar -C ~/zabbix-source
+
+
+
+
+
+LOAD DATABASE
+  FROM mysql://zabbix:zabbix-password@localhost/zabbix
+  INTO postgresql://zabbix:zabbix-password@localhost/zabbix
+WITH include no drop,
+     truncate,
+     create no tables,
+     create no indexes,
+     no foreign keys,
+     reset sequences,
+     data only
+SET maintenance_work_mem TO '1024MB', work_mem to '256MB'
+ALTER SCHEMA 'zabbix' RENAME TO 'public'
+BEFORE LOAD EXECUTE create.sql
+AFTER LOAD EXECUTE alter.sql;
+

@@ -1,0 +1,14 @@
+LOAD DATABASE
+  FROM mysql://zabbix:zabbix-password@localhost/zabbix
+  INTO postgresql://zabbix:zabbix-password@localhost/zabbix
+WITH include no drop,
+     truncate,
+     create no tables,
+     create no indexes,
+     no foreign keys,
+     reset sequences,
+     data only
+SET maintenance_work_mem TO '1024MB', work_mem to '256MB'
+ALTER SCHEMA 'zabbix' RENAME TO 'public'
+BEFORE LOAD EXECUTE create.sql
+AFTER LOAD EXECUTE alter.sql;
