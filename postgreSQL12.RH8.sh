@@ -25,10 +25,8 @@ sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 metadata_expire=300
 EOL
 
-
-
+# Clean package manager cache
 dnf clean all
-
 
 # Disable the built-in PostgreSQL module:
 dnf -qy module disable postgresql
@@ -36,30 +34,79 @@ dnf -qy module disable postgresql
 # install pg 12 server, timescaledb extension, agent2 to natively monitor database
 dnf install -y postgresql12-server timescaledb-postgresql-12 zabbix-agent2 vim
 
-
 # systemctl stop postgresql-12
 # rm -rf /var/lib/pgsql/12/data
-
 
 # initialize database and enable automatic start:
 /usr/pgsql-12/bin/postgresql-12-setup initdb
 
 # enable TimescaleDB module
 echo "shared_preload_libraries = 'timescaledb'" >> /var/lib/pgsql/12/data/postgresql.conf
-echo "listen_addresses = '10.133.253.44'" >> /var/lib/pgsql/12/data/postgresql.conf
+
+# specify/whiteliust the binding address so other remote machines can connect to server
+echo "listen_addresses = '0.0.0.0'" >> /var/lib/pgsql/12/data/postgresql.conf
 
 systemctl enable postgresql-12
 systemctl start postgresql-12
 systemctl status postgresql-12
 
 # check if postgres is listening on IP address
-ss --tcp --listen --numeric
-
-# psql -h'10.133.253.44' --user=zabbix --port=5432
+ss --tcp --listen --numeric | grep 5432
+# it should not listen on '127.0.0.1'
 
 # navigate to posgres user (root for db engine)
 su - postgres
 
+# contact azure instance with most privilaged user 'postgres' and download structure of everything. It will be 2 megabyte file
+PGPASSWORD=zabbix \
+pg_dumpall \
+--host=HOSTNAME \
+--port=PORT \
+--username=postgres \
+--schema-only \
+--file=/tmp/azure.postgres.schema.only
+
+# exit 'postgres' user
+exit
+
+
+
+PGPASSWORD=zabbix \
+pg_dumpall \
+--host=10.133.112.87 \
+--port=7412 \
+--username=postgres \
+--schema-only \
+--file=/tmp/azure.postgres.schema.only
+
+
+
+--schema-only > /tmp/all.sql
+
+
+pg_dump \
+--host=10.133.112.87 \
+--port=7412 \
+--dbname=z44 \
+--username=zabbix \
+--password \
+--format=plain \
+--schema-only > /tmp/schema.sql
+
+
+PGHOST=10.133.112.87 PGPORT=7412 PGPASSWORD=zabbix PGUSER=postgres \
+pg_dump \
+--data-only \
+--exclude-schema=_timescaledb_internal \
+--exclude-schema=_timescaledb_catalog \
+--exclude-schema=pg_catalog \
+--exclude-table-data=history* \
+--exclude-table-data=trends* \
+--format=plain \
+z50 | gzip --fast > /tmp/data.sql.gz
+
+
+exit
 
 
 
@@ -80,13 +127,15 @@ createdb -O zabbix zabbix
 
 # insert 5.0 schema
 cd ~/zabbix-5.0.4/database/postgresql/
-cat schema.sql | psql --port=5432 --user=zabbix zabbix
+cat schema.sql | psql zabbix
+# insert sql under bash user zabbix which will be automatically correlated with SQL user 'zabbix' if exists
+cat schema.sql | sudo -u zabbix psql zabbix
 
 # create timescaledb extenison
 echo "CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;" | psql zabbix
 
 # enable timescaledb definition how to chunk data for all 7 historical tables
-cat timescaledb.sql | psql --port=5432 zabbix
+cat timescaledb.sql | psql zabbix
 
 
 # cat images.sql data.sql | psql --port=5432 zabbix
@@ -106,6 +155,8 @@ PGHOST=10.133.112.87 PGPORT=7412 PGPASSWORD=zabbix PGUSER=postgres \
 pg_dump \
 --data-only \
 --exclude-schema=_timescaledb_internal \
+--exclude-schema=_timescaledb_catalog \
+--exclude-schema=pg_catalog \
 --exclude-table-data=history* \
 --exclude-table-data=trends* \
 --format=plain \
@@ -119,7 +170,9 @@ z50 | gzip --fast > /tmp/data.sql.gz
 
 
 # restore data. dump does not contain hypertables
-zcat /tmp/data.sql.gz | psql zabbix
+
+zcat /tmp/data.sql.gz | sudo -u zabbix psql zabbix
+
 
 # ERROR:  duplicate key value violates unique constraint "hypertable_pkey"
 # DETAIL:  Key (id)=(1) already exists.
@@ -131,15 +184,13 @@ zcat /tmp/data.sql.gz | psql zabbix
 
 
 
-PGHOST=10.133.112.87 PGPORT=7412 PGPASSWORD=zabbix PGUSER=postgres \
-pg_dump \
---exclude-schema=_timescaledb_internal \
---exclude-table-data=history* \
---exclude-table-data=trends* \
+
+
+
+
 --exclude-table-data='*hypertable*' \
 --exclude-table-data='*chunk*' \
---format=plain \
-z50 | gzip --fast > /tmp/all.sql.gz
+
 
 
 
@@ -173,6 +224,23 @@ systemctl restart postgresql-12
 
 vi /var/lib/pgsql/12/data/pg_hba.conf
 
+
+--Create traditional trend tables as the old definitions with different names.
+CREATE TABLE history_uint_new (LIKE history_uint INCLUDING ALL);
+
+--Then you can migrate old data into new one if needed. This is optional.
+--Be sure that you have enough storage to duplicate the tables.
+insert into history_uint_new select * from history_uint;
+
+--Be sure that, new tables has the right data. Check the counts.
+select count(itemid) from history_uint;
+select count(itemid) from history_uint_new;
+
+--Now you can drop old timescaled tables.
+drop table history_uint;
+
+--Lastly, rename new traditional tables as needed.
+alter table history_uint_new rename to history_uint;
 
 
 # https://docs.timescale.com/latest/using-timescaledb/backup
