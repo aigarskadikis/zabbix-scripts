@@ -108,18 +108,6 @@ pg_dump \
 
 cat schema.sql | grep "^CREATE TABLE" | sort | uniq
 
-# approach 2. not working
-PGPASSWORD=zabbix \
-pg_dump \
---username=postgres \
---exclude-table='_hyper*chunk' \
---exclude-table='*history*' \
---exclude-table='*trends*' \
---schema-only \
---dbname=zabbix \
---file=exclude.hyper.chunk.sql
-cat exclude.hyper.chunk.sql | grep "^CREATE TABLE" | sort | uniq
-
 
 # approach 3. is working
 PGPASSWORD=zabbix \
@@ -128,9 +116,15 @@ pg_dump \
 --exclude-schema=_timescaledb_internal \
 --schema-only \
 --dbname=zabbix \
---file=exclude.timescaledb.internal.sql
+--file=exclude.schema.timescaledb.internal.sql
 cat exclude.schema.timescaledb.internal.sql | grep "^CREATE TABLE" | sort | uniq
 cat exclude.schema.timescaledb.internal.sql | grep "^CREATE TABLE" | sort | uniq | wc -l
+grep "^CREATE TRIGGER" exclude.schema.timescaledb.internal.sql
+
+# detete all timescale related triggers
+sed -i "s|^CREATE TRIGGER ts_.*$||" exclude.schema.timescaledb.internal.sql
+
+
 
 
 --exclude-schema=pg_catalog \
