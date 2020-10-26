@@ -94,6 +94,61 @@ pg_dump \
 --schema-only > /tmp/schema.sql
 
 
+# cat azure.postgres.schema.only | grep "^CREATE TABLE" | sort | uniq
+
+cat schema.sql | grep "^CREATE TABLE" | sort | uniq
+
+# default approach. must be used under 'postgres' user.
+PGPASSWORD=zabbix \
+pg_dump \
+--username=postgres \
+--schema-only \
+--dbname=zabbix \
+--file=schema.sql
+
+cat schema.sql | grep "^CREATE TABLE" | sort | uniq
+
+# approach 2. not working
+PGPASSWORD=zabbix \
+pg_dump \
+--username=postgres \
+--exclude-table='_hyper*chunk' \
+--exclude-table='*history*' \
+--exclude-table='*trends*' \
+--schema-only \
+--dbname=zabbix \
+--file=exclude.hyper.chunk.sql
+cat exclude.hyper.chunk.sql | grep "^CREATE TABLE" | sort | uniq
+
+
+# approach 3. is working
+PGPASSWORD=zabbix \
+pg_dump \
+--username=postgres \
+--exclude-schema=_timescaledb_internal \
+--schema-only \
+--dbname=zabbix \
+--file=exclude.timescaledb.internal.sql
+cat exclude.schema.timescaledb.internal.sql | grep "^CREATE TABLE" | sort | uniq
+cat exclude.schema.timescaledb.internal.sql | grep "^CREATE TABLE" | sort | uniq | wc -l
+
+
+--exclude-schema=pg_catalog \
+--exclude-schema=_timescaledb_catalog \
+
+
+PGPASSWORD=zabbix \
+pg_dump \
+--host=10.133.112.87 \
+--port=7412 \
+--username=postgres \
+--exclude-table='_hyper*chunk' \
+--schema-only \
+--dbname=z50 \
+--file=/tmp/azure.postgres.schema.only
+
+
+
 PGHOST=10.133.112.87 PGPORT=7412 PGPASSWORD=zabbix PGUSER=postgres \
 pg_dump \
 --data-only \
@@ -105,6 +160,10 @@ pg_dump \
 --format=plain \
 z50 | gzip --fast > /tmp/data.sql.gz
 
+
+--exclude-table
+
+--exclude-schema=_timescaledb_internal
 
 exit
 
@@ -131,10 +190,16 @@ cat schema.sql | psql zabbix
 # insert sql under bash user zabbix which will be automatically correlated with SQL user 'zabbix' if exists
 cat schema.sql | sudo -u zabbix psql zabbix
 
-# create timescaledb extenison
+su - postgres
+
+# create timescaledb extenison. this must be done super user
 echo "CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;" | psql zabbix
 
 # enable timescaledb definition how to chunk data for all 7 historical tables
+cat timescaledb.sql | psql zabbix
+
+zcat /usr/share/doc/zabbix-server-pgsql/timescaledb.sql.gz | psql zabbix
+
 cat timescaledb.sql | psql zabbix
 
 
