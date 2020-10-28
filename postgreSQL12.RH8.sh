@@ -121,8 +121,39 @@ cat exclude.schema.timescaledb.internal.sql | grep "^CREATE TABLE" | sort | uniq
 cat exclude.schema.timescaledb.internal.sql | grep "^CREATE TABLE" | sort | uniq | wc -l
 grep "^CREATE TRIGGER" exclude.schema.timescaledb.internal.sql
 
+
+# download data. seems to be excluding everything timescale related
+PGPASSWORD=zabbix \
+pg_dump \
+--username=postgres \
+--exclude-schema=_timescaledb_internal \
+--exclude-schema=_timescaledb_cache \
+--exclude-schema=_timescaledb_catalog \
+--exclude-schema=_timescaledb_config \
+--exclude-table-data=history* \
+--exclude-table-data=trends* \
+--data-only \
+--dbname=zabbix \
+--file=data.sql
+
+
+
+
+
 # detete all timescale related triggers
 sed -i "s|^CREATE TRIGGER ts_.*$||" exclude.schema.timescaledb.internal.sql
+
+
+
+
+# approach 4
+PGPASSWORD=zabbix \
+pg_dump \
+--username=postgres \
+--exclude-schema=_timescaledb_internal \
+--schema-only \
+--dbname=zabbix \
+--file=schema.sql
 
 
 
