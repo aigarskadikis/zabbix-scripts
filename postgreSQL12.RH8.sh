@@ -57,6 +57,58 @@ ss --tcp --listen --numeric | grep 5432
 # navigate to posgres user (root for db engine)
 su - postgres
 
+
+
+
+# go to postgres
+su - postgres
+
+cd /tmp
+
+
+# download data from cloud instance
+PGPASSWORD=zabbix \
+pg_dump \
+--host=10.133.253.44 \
+--port=5432 \
+--username=postgres \
+--password \
+--exclude-schema=_timescaledb_internal \
+--exclude-schema=_timescaledb_cache \
+--exclude-schema=_timescaledb_catalog \
+--exclude-schema=_timescaledb_config \
+--exclude-table-data=history* \
+--exclude-table-data=trends* \
+--data-only \
+--dbname=zabbix \
+--file=data.sql
+
+
+
+--dbname=z44 \
+--username=zabbix \
+
+
+curl https://cdn.zabbix.com/zabbix/sources/stable/5.0/zabbix-5.0.5.tar.gz -o zabbix-source.tar.gz
+gunzip zabbix-source.tar.gz
+tar xvf zabbix-source.tar
+rm -rf zabbix-source.tar
+cd /tmp/zabbix-5.0.5/database/postgresql/
+
+dropdb new2 && createdb -O zabbix new2
+--insert schema just exactly under user 'zabbix'
+
+cd ~/zabbix-5.0.5/database/postgresql && cat schema.sql | PGPASSWORD=zabbix psql --user=zabbix --host=127.0.0.1 new2 && cd
+cd
+cat data.sql | PGPASSWORD=zabbix psql --user=zabbix --host=127.0.0.1 new2 > /tmp/data.insert.log 2>&1
+
+dropdb new2
+
+
+
+
+
+
 # contact azure instance with most privilaged user 'postgres' and download structure of everything. It will be 2 megabyte file
 PGPASSWORD=zabbix \
 pg_dumpall \
@@ -122,6 +174,11 @@ cat exclude.schema.timescaledb.internal.sql | grep "^CREATE TABLE" | sort | uniq
 grep "^CREATE TRIGGER" exclude.schema.timescaledb.internal.sql
 
 
+
+--see size of table events. this table is next biggest after raw historical data
+SELECT pg_size_pretty( pg_total_relation_size('events') );
+
+
 # download data. seems to be excluding everything timescale related
 PGPASSWORD=zabbix \
 pg_dump \
@@ -137,7 +194,18 @@ pg_dump \
 --file=data.sql
 
 
+# fetch data from cloud
 
+pg_dump \
+--exclude-schema=_timescaledb_internal \
+--exclude-schema=_timescaledb_cache \
+--exclude-schema=_timescaledb_catalog \
+--exclude-schema=_timescaledb_config \
+--exclude-table-data=history* \
+--exclude-table-data=trends* \
+--data-only \
+--dbname=z50 \
+--file=data.sql
 
 
 # detete all timescale related triggers
@@ -191,15 +259,6 @@ z50 | gzip --fast > /tmp/data.sql.gz
 --exclude-schema=_timescaledb_internal
 
 exit
-
-
-
-cd
-curl https://cdn.zabbix.com/zabbix/sources/stable/5.0/zabbix-5.0.4.tar.gz -o zabbix-source.tar.gz
-gunzip zabbix-source.tar.gz
-tar xvf zabbix-source.tar
-rm -rf zabbix-source.tar
-cd zabbix-5.0.4/database/postgresql/
 
 
 # create user
