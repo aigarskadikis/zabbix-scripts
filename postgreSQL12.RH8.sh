@@ -70,10 +70,16 @@ su - postgres
 
 cd /tmp
 
-# source
-# download data from cloud instance
-PGHOST=10.133.112.87 PGPORT=7412 PGUSER=postgres PGPASSWORD=zabbix \
+# on cloud instance check size of events table
+SELECT pg_size_pretty(pg_total_relation_size('events'));
+# if it's less than 2G then continue
+
+# create a dump of cloud instance without historical data (no dots in the graphs)
+PGPASSWORD=zabbix \
 pg_dump \
+--host=10.133.112.87 \
+--port=7412 \
+--user=postgres \
 --exclude-schema=_timescaledb_internal \
 --exclude-schema=_timescaledb_cache \
 --exclude-schema=_timescaledb_catalog \
@@ -84,12 +90,43 @@ pg_dump \
 --dbname=z50 \
 --file=/tmp/data.sql
 
+# it will print:
+# pg_dump: warning: there are circular foreign-key constraints on this table:
+# pg_dump:   application_prototype
+# pg_dump: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+# pg_dump: Consider using a full dump instead of a --data-only dump to avoid this problem.
+# pg_dump: warning: there are circular foreign-key constraints on this table:
+# pg_dump:   graphs
+# pg_dump: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+# pg_dump: Consider using a full dump instead of a --data-only dump to avoid this problem.
+# pg_dump: warning: there are circular foreign-key constraints on this table:
+# pg_dump:   group_prototype
+# pg_dump: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+# pg_dump: Consider using a full dump instead of a --data-only dump to avoid this problem.
+# pg_dump: warning: there are circular foreign-key constraints on this table:
+# pg_dump:   hosts
+# pg_dump: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+# pg_dump: Consider using a full dump instead of a --data-only dump to avoid this problem.
+# pg_dump: warning: there are circular foreign-key constraints on this table:
+# pg_dump:   httptest
+# pg_dump: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+# pg_dump: Consider using a full dump instead of a --data-only dump to avoid this problem.
+# pg_dump: warning: there are circular foreign-key constraints on this table:
+# pg_dump:   items
+# pg_dump: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+# pg_dump: Consider using a full dump instead of a --data-only dump to avoid this problem.
+# pg_dump: warning: there are circular foreign-key constraints on this table:
+# pg_dump:   triggers
+# pg_dump: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+# pg_dump: Consider using a full dump instead of a --data-only dump to avoid this problem.
+
+
 # destination
-# create user 'zabbix_user'
+# on a local postgres engine create user 'zabbix_user'
 PGHOST=10.133.112.87 PGPORT=17411 PGUSER=postgres PGPASSWORD=zabbix createuser --pwprompt zabbix_user
 
-# drop database
-PGHOST=10.133.112.87 PGPORT=17411 PGUSER=postgres PGPASSWORD=zabbix dropdb zabbix_db
+# if there is an old database from previous tests - drop it
+# PGHOST=10.133.112.87 PGPORT=17411 PGUSER=postgres PGPASSWORD=zabbix dropdb zabbix_db
 
 # create database 'zabbix_db'
 PGHOST=10.133.112.87 PGPORT=17411 PGUSER=postgres PGPASSWORD=zabbix createdb -O zabbix_user zabbix_db
@@ -101,25 +138,37 @@ gunzip zabbix-source.tar.gz
 tar xvf zabbix-source.tar
 rm -rf zabbix-source.tar
 
-# insert stock schema
-cat /tmp/zabbix-5.0.5/database/postgresql/schema.sql | PGHOST=10.133.112.87 PGPORT=17411 PGUSER=zabbix_user PGPASSWORD=zabbix psql zabbix_db > /tmp/data.insert.log 2>&1
+# insert stock schema inside database 'zabbix_db' under postgres user 'zabbix_user'
+cat /tmp/zabbix-5.0.5/database/postgresql/schema.sql | \
+PGPASSWORD=zabbix \
+psql \
+--host=10.133.112.87 \
+--port=17411 \
+--user=zabbix_user \
+zabbix_db > /tmp/data.insert.log 2>&1
 
-# check errors
+# check log
 head -10 /tmp/data.insert.log
 tail -10 /tmp/data.insert.log
+# there should be no errors and warnings
 grep -i error /tmp/data.insert.log
 grep -i warning /tmp/data.insert.log
-
 
 # insert data from backup
-cat /tmp/data.sql | PGHOST=10.133.112.87 PGPORT=17411 PGPASSWORD=zabbix PGUSER=zabbix_user PGPASSWORD=zabbix psql zabbix_db >> /tmp/data.insert.log 2>&1
+cat /tmp/data.sql | \
+PGPASSWORD=zabbix \
+psql \
+--host=10.133.112.87 \
+--port=17411 \
+--user=zabbix_user \
+zabbix_db >> /tmp/data.insert.log 2>&1
 
-# check errors
+# check log
 head -10 /tmp/data.insert.log
-tail -20 /tmp/data.insert.log
+tail -10 /tmp/data.insert.log
+# there should be no errors and warnings
 grep -i error /tmp/data.insert.log
 grep -i warning /tmp/data.insert.log
-
 
 
 
