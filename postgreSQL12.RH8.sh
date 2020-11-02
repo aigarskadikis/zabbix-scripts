@@ -1,5 +1,10 @@
 
 
+# specific timescale and postgres version
+# docker run --name pg11ts132 -t -e POSTGRES_PASSWORD="zabbix" -e POSTGRES_DB="dummy_db" -p 17411:5432 -d timescale/timescaledb:1.3.2-pg11
+
+
+
 echo 1 | sudo tee /proc/sys/vm/overcommit_memory
 sudo dd if=/dev/zero of=/myswap1 bs=1M count=1024 && sudo chown root:root /myswap1 && sudo chmod 0600 /myswap1 && sudo mkswap /myswap1 && sudo swapon /myswap1 && free -m
 sudo dd if=/dev/zero of=/myswap2 bs=1M count=1024 && sudo chown root:root /myswap2 && sudo chmod 0600 /myswap2 && sudo mkswap /myswap2 && sudo swapon /myswap2 && free -m
@@ -65,14 +70,10 @@ su - postgres
 
 cd /tmp
 
-
+# source
 # download data from cloud instance
-PGPASSWORD=zabbix \
+PGHOST=10.133.112.87 PGPORT=7412 PGUSER=postgres PGPASSWORD=zabbix \
 pg_dump \
---host=10.133.253.44 \
---port=5432 \
---username=postgres \
---password \
 --exclude-schema=_timescaledb_internal \
 --exclude-schema=_timescaledb_cache \
 --exclude-schema=_timescaledb_catalog \
@@ -80,29 +81,44 @@ pg_dump \
 --exclude-table-data=history* \
 --exclude-table-data=trends* \
 --data-only \
---dbname=zabbix \
---file=data.sql
+--dbname=z50 \
+--file=/tmp/data.sql
 
+# destination
+# create user 'zabbix_user'
+PGHOST=10.133.112.87 PGPORT=17411 PGUSER=postgres PGPASSWORD=zabbix createuser --pwprompt zabbix_user
 
+# drop database
+PGHOST=10.133.112.87 PGPORT=17411 PGUSER=postgres PGPASSWORD=zabbix dropdb zabbix_db
 
---dbname=z44 \
---username=zabbix \
+# create database 'zabbix_db'
+PGHOST=10.133.112.87 PGPORT=17411 PGUSER=postgres PGPASSWORD=zabbix createdb -O zabbix_user zabbix_db
 
-
+# move to '/tmp' download zabbix source to get stock schema
+cd /tmp
 curl https://cdn.zabbix.com/zabbix/sources/stable/5.0/zabbix-5.0.5.tar.gz -o zabbix-source.tar.gz
 gunzip zabbix-source.tar.gz
 tar xvf zabbix-source.tar
 rm -rf zabbix-source.tar
-cd /tmp/zabbix-5.0.5/database/postgresql/
 
-dropdb new2 && createdb -O zabbix new2
---insert schema just exactly under user 'zabbix'
+# insert stock schema
+cat /tmp/zabbix-5.0.5/database/postgresql/schema.sql | PGHOST=10.133.112.87 PGPORT=17411 PGUSER=zabbix_user PGPASSWORD=zabbix psql zabbix_db > /tmp/data.insert.log 2>&1
 
-cd ~/zabbix-5.0.5/database/postgresql && cat schema.sql | PGPASSWORD=zabbix psql --user=zabbix --host=127.0.0.1 new2 && cd
-cd
-cat data.sql | PGPASSWORD=zabbix psql --user=zabbix --host=127.0.0.1 new2 > /tmp/data.insert.log 2>&1
+# check errors
+head -10 /tmp/data.insert.log
+tail -10 /tmp/data.insert.log
+grep -i error /tmp/data.insert.log
+grep -i warning /tmp/data.insert.log
 
-dropdb new2
+
+# insert data from backup
+cat /tmp/data.sql | PGHOST=10.133.112.87 PGPORT=17411 PGPASSWORD=zabbix PGUSER=zabbix_user PGPASSWORD=zabbix psql zabbix_db >> /tmp/data.insert.log 2>&1
+
+# check errors
+head -10 /tmp/data.insert.log
+tail -20 /tmp/data.insert.log
+grep -i error /tmp/data.insert.log
+grep -i warning /tmp/data.insert.log
 
 
 
@@ -361,6 +377,13 @@ pg_dump \
 z50 | gzip --fast > /tmp/history.sql.gz
 
 --exclude-table=table
+
+
+
+
+
+
+
 
 
 # restore data. dump does not contain hypertables
