@@ -70,9 +70,12 @@ su - postgres
 
 cd /tmp
 
-# on cloud instance check size of events table
+# on the cloud instance check size of events table
 SELECT pg_size_pretty(pg_total_relation_size('events'));
 # if it's less than 2G then continue
+
+# also show output:
+SELECT source,COUNT(*) FROM events GROUP BY source;
 
 # create a dump of cloud instance without historical data (no dots in the graphs)
 PGPASSWORD=zabbix \
@@ -89,6 +92,7 @@ pg_dump \
 --data-only \
 --dbname=z50 \
 --file=/tmp/data.sql
+# i think the dump will be completed in less than 10 minutes. It may lock an table 'events' for Zabbix application.
 
 # it will print:
 # pg_dump: warning: there are circular foreign-key constraints on this table:
