@@ -143,6 +143,7 @@ tar xvf zabbix-source.tar
 rm -rf zabbix-source.tar
 
 # insert stock schema inside database 'zabbix_db' under postgres user 'zabbix_user'
+cat /tmp/zabbix-5.0.5/database/postgresql/schema.sql | PGUSER=zabbix_user PGPASSWORD=zabbix PGHOST=127.0.0.1 psql zabbix_db > /tmp/data.insert.log 2>&1
 cat /tmp/zabbix-5.0.5/database/postgresql/schema.sql | \
 PGPASSWORD=zabbix \
 psql \
@@ -159,6 +160,10 @@ grep -i error /tmp/data.insert.log
 grep -i warning /tmp/data.insert.log
 
 # insert data from backup
+zcat /tmp/data.sql.gz | PGUSER=zabbix_user PGPASSWORD=zabbix PGHOST=127.0.0.1 psql zabbix_db > /tmp/data.insert2.log 2>&1
+grep -i error /tmp/data.insert2.log
+grep -i warning /tmp/data.insert2.log
+
 cat /tmp/data.sql | \
 PGPASSWORD=zabbix \
 psql \
