@@ -1,0 +1,12 @@
+#!/bash/bin
+FirewallEnable()
+{
+for i oin 80/tcp 10051 162/udp
+do
+firewall-cmd --list-ports | sed 's,\s\+,\n,g' | grep -o "^${i}$" >/dev/null ||
+{
+sudo firewall-cmd --add-port=${i} --permanent
+sudo firewall-cmd --add-port=${i}
+}
+done
+}
