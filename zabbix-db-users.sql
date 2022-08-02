@@ -3,7 +3,6 @@
 --generate rendom password from bash
 -- < /dev/urandom tr -dc A-Za-z0-9 | head -c${1:-20};echo;
 
-
 CREATE USER   
 'zbx_srv'@'192.168.88.101' IDENTIFIED WITH mysql_native_password BY 'pass_zbx_srv',   
 'zbx_srv'@'192.168.88.102' IDENTIFIED WITH mysql_native_password BY 'pass_zbx_srv',   
