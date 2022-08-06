@@ -1,9 +1,0 @@
-
-
-#show group id of group 'Routers'
-curl -s -X POST -H 'Content-Type: application/json' -d '{"jsonrpc": "2.0","method": "hostgroup.get","params": {"output": "extend","filter": {"name": ["Routers"]}},"auth": "7e02d5f41035969576ed70a18af31345","id": 1 }' http://127.0.0.1/zabbix/api_jsonrpc.php | jq -r '.result[].groupid'
-
-
-
-curl -s -X POST -H 'Content-Type: application/json' -d '{"jsonrpc": "2.0","method": "hostgroup.get","params": {"output": "extend","filter": {"name": ["Routers"]}},"auth": "7e02d5f41035969576ed70a18af31345","id": 1 }' http://127.0.0.1/zabbix/api_jsonrpc.php | jq -r '.result[]'
-
